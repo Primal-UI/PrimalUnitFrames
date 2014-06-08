@@ -1,0 +1,20 @@
+## Interface: 50400
+## Title: NinjaKittyUF
+## Notes: Only a player and vehicle frame for my UI.
+## Dependencies: NinjaKittyCore
+## OptionalDeps:
+## Author: meribold (Lukas Waymann)
+## Version: 0.1
+
+embeds.xml
+
+core.lua
+header_bar.lua
+health_bar.lua
+power_bar.lua
+cast_frame.lua
+kitty_power_frame.lua
+player_power_bar_alt.lua
+unit_frame.lua
+tags.lua
+settings.lua
