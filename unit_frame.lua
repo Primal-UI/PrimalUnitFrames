@@ -1,13 +1,24 @@
 setfenv(1, NinjaKittyUF)
 
-barTypes = {
-  Header = HeaderBar,
-  Health = HealthBar,
-}
-
 function createUnitFrame(attributes)
-  local unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent,
-    "SecureUnitButtonTemplate")
+  local unitFrame
+  if _G.string.match(attributes.unit, "arena") then
+    --unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent,
+      --"SecureUnitButtonTemplate,SecureHandlerAttributeTemplate")
+    -- Mutually exclusive? I can't get the "_onstate-unitexists" snippet to execute when using both
+    -- the SecureHandlerAttributeTemplate and SecureHandlerStateTemplate.
+    --unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent,
+      --"SecureUnitButtonTemplate,SecureHandlerStateTemplate")
+    unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent, "SecureHandlerStateTemplate")
+  else
+    unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent,
+      "SecureUnitButtonTemplate")
+    unitFrame:SetAttribute("*type1", "target")
+    unitFrame:SetAttribute("*type2", "focus")
+    unitFrame:SetAttribute("*type3", "togglemenu")
+  end
+  unitFrame:SetAttribute("unit", attributes.unit)
+
   unitFrame:SetFrameLevel(10)
   unitFrame:SetPoint(attributes.point, _G[attributes.relativeTo], attributes.relativePoint,
     attributes.xOffset, attributes.yOffset)
@@ -19,11 +30,6 @@ function createUnitFrame(attributes)
   unitFrame:SetBackdrop(settings.unitFrameBackdrop)
   unitFrame:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
 
-  unitFrame:SetAttribute("unit", attributes.unit)
-  unitFrame:SetAttribute("*type1", "target")
-  unitFrame:SetAttribute("*type2", "focus")
-  unitFrame:SetAttribute("*type3", "togglemenu")
-
   unitFrame:RegisterForClicks("AnyDown")
 
   --------------------------------------------------------------------------------------------------
@@ -33,7 +39,6 @@ function createUnitFrame(attributes)
   local function createBar(i)
     local mirror = attributes.bars[i].mirror
     local bar = attributes.bars[i].create(attributes.unit, mirror, unitFrame)
-    --local bar = attributes.bars[i].create(attributes.unit, _G.unpack(attributes.bars[i].arguments))
     local height = attributes.bars[i].height
     bar:SetParent(unitFrame)
     bar:SetPoint("TOPLEFT", settings.spacing, yOffset)
@@ -43,7 +48,6 @@ function createUnitFrame(attributes)
     return bar
   end
 
-  --_G.table.insert(unitFrame.bars, createBar(1))
   unitFrame.bars[1] = createBar(1)
 
   for i = 2, #attributes.bars do
@@ -53,7 +57,6 @@ function createUnitFrame(attributes)
     spacer:SetPoint("TOPRIGHT", -settings.spacing, yOffset)
     spacer:SetHeight(1)
     yOffset = yOffset - settings.spacing
-    --_G.table.insert(unitFrame.bars, createBar(i))
     unitFrame.bars[i] = createBar(i)
   end
 
@@ -72,16 +75,27 @@ function createUnitFrame(attributes)
     end
   end
 
+  -- The UI is not locked down yet when PLAYER_LOGIN fires, _G.InCombatLockdown() is false.
+  -- PLAYER_REGEN_DISABLED can be used to detect when the player is entering combat. IsInInstance()
+  -- already returns useful information.
   function unitFrame:PLAYER_LOGIN()
     self:initialize()
   end
   unitFrame:RegisterEvent("PLAYER_LOGIN")
 
   -- Stuff we need to do when PLAYER_ENTERING_WORLD fires or when the unit changes.
-  function unitFrame:update()
-    if _G.UnitExists(self.unit) then
+  if _G.string.match(unitFrame.unit, "arena") then
+    function unitFrame:update()
       for _, bar in _G.ipairs(self.bars) do
         if bar.update then bar:update(self.unit) end
+      end
+    end
+  else
+    function unitFrame:update()
+      if _G.UnitExists(self.unit) then
+        for _, bar in _G.ipairs(self.bars) do
+          if bar.update then bar:update(self.unit) end
+        end
       end
     end
   end
@@ -90,43 +104,77 @@ function createUnitFrame(attributes)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
     self:update()
   end
+  unitFrame:RegisterUnitEvent("UNIT_NAME_UPDATE", unitFrame.unit)
 
   function unitFrame:UNIT_PHASE(unit)
     self:update()
   end
+  unitFrame:RegisterUnitEvent("UNIT_PHASE", unitFrame.unit)
 
   function unitFrame:UNIT_CONNECTION(unit, hasConnected)
     self:update()
   end
+  unitFrame:RegisterUnitEvent("UNIT_CONNECTION", unitFrame.unit)
 
   function unitFrame:COMBAT_LOG_EVENT_UNFILTERED(_, event, _, _, _, _, _, destGUID, _, _, _)
     if event == "UNIT_DIED" and _G.UnitGUID(self.unit) == destGUID then
       self:update()
     end
   end
-
-  function unitFrame:PLAYER_ENTERING_WORLD()
-    self:update()
-  end
-
-  unitFrame:RegisterUnitEvent("UNIT_NAME_UPDATE", unitFrame.unit)
-  unitFrame:RegisterUnitEvent("UNIT_PHASE", unitFrame.unit)
-  unitFrame:RegisterUnitEvent("UNIT_CONNECTION", unitFrame.unit)
   unitFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+
+  if _G.string.match(unitFrame.unit, "arena") then
+    function unitFrame:PLAYER_ENTERING_WORLD()
+      _G.assert(not _G.InCombatLockdown())
+      local _, instanceType = _G.IsInInstance()
+
+      -- http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/SecureStateDriver.lua
+      if _G.UnitWatchRegistered(unitFrame) then
+        _G.UnregisterUnitWatch(unitFrame)
+      end
+      if instanceType == "arena" then
+        -- The "state-unitexists" attribute will be set to a boolean value denoting whether the unit
+        -- exists.
+        _G.RegisterUnitWatch(unitFrame, true)
+      elseif instanceType == "pvp" then
+        _G.RegisterUnitWatch(unitFrame)
+      end
+
+      if instanceType ~= "arena" then
+        self:Hide()
+      elseif _G.UnitExists(self.unit) then
+        self:update()
+      end
+    end
+  else
+    function unitFrame:PLAYER_ENTERING_WORLD()
+      if _G.UnitExists(self.unit) then
+        self:update()
+      end
+    end
+  end
   unitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
+  if not _G.string.match(unitFrame.unit, "arena") and unitFrame.unit ~= "player" then
+    _G.RegisterUnitWatch(unitFrame)
+  end
+
+  --------------------------------------------------------------------------------------------------
   if unitFrame.unit == "player" then
     -- ...
+
   elseif unitFrame.unit == "target" then
     function unitFrame:PLAYER_TARGET_CHANGED(cause)
       self:update()
     end
     unitFrame:RegisterEvent("PLAYER_TARGET_CHANGED") -- This is faster than UNIT_TARGET.
+
   elseif unitFrame.unit == "focus" then
     function unitFrame:PLAYER_FOCUS_CHANGED(cause)
       self:update()
     end
     unitFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+
   elseif unitFrame.unit == "vehicle" then
     function unitFrame:UNIT_ENTERED_VEHICLE(unit)
       if unit == "player" then -- I don't know why we need to check this, but apparently we do.
@@ -134,27 +182,59 @@ function createUnitFrame(attributes)
       end
     end
     unitFrame:RegisterUnitEvent("UNIT_ENTERED_VEHICLE", "player")
+
   elseif _G.string.match(unitFrame.unit, "arena") then
-    -- Doesn't work.
-    --[[
-    function unitFrame:ARENA_OPPONENT_UPDATE(unit, type)
-      _G.assert(_G.UnitIsUnit(unit, self.unit))
-      self:update()
-    end
-    unitFrame:RegisterUnitEvent("ARENA_OPPONENT_UPDATE", "player")
-    ]]
-    -- Doesn't work either.
-    --[=[
-    _G.SecureHandlerWrapScript(unitFrame, "OnAttributeChanged", unitFrame, [[
-      print(name or "nil", value or "nil")
+    unitFrame:SetAttribute("_onstate-unitexists", [[ -- arguments: self, stateid, newstate
+      --print("_onstate-unitexists", self, stateid, newstate)
+      if newstate then
+        self:CallMethod("update")
+        if not self:IsShown() then self:Show() end
+      end
     ]])
-    ]=]
-    if not unitFrame:HasScript("OnShow") then
-      unitFrame:SetScript("OnShow", function(self) end)
+    --[=[
+    unitFrame:SetAttribute("_onattributechanged", [[ -- arguments: self, name, value
+      --print("_onattributechanged", self, name, value)
+      if name == "state-unitexists" then
+        -- ...
+      end
+    ]])
+    --]=]
+    function unitFrame:ARENA_PREP_OPPONENT_SPECIALIZATIONS()
+      --if _G.InCombatLockdown() then return end
+      local specID
+      for i = 1, _G.MAX_ARENA_ENEMIES do
+        if unitFrame.unit == "arena" .. i then
+          specID = _G.GetArenaOpponentSpec(i)
+          break
+        end
+      end
+      if specID and specID > 0 then
+        local _, name, _, _, _, _, class = _G.GetSpecializationInfoByID(specID)
+        if not self:IsShown() then
+          self:Show()
+        else
+          self:update()
+        end
+      end
     end
-    unitFrame:HookScript("OnShow", function(self)
-      self:update()
-    end)
+    unitFrame:RegisterEvent("ARENA_PREP_OPPONENT_SPECIALIZATIONS")
+    function unitFrame:ARENA_OPPONENT_UPDATE(unit, eventType)
+      if _G.UnitIsUnit(unit, self.unit) then
+        _G.print(unit, eventType)
+      end
+      if _G.UnitExists(unit) then
+        self:update()
+      end
+      if not _G.InCombatLockdown() then
+        if _G.UnitIsUnit(unit, self.unit) then
+          if eventType == "cleared" then
+            self:Hide()
+          end
+        end
+      end
+    end
+    unitFrame:RegisterUnitEvent("ARENA_OPPONENT_UPDATE", unitFrame.unit)
+
   elseif _G.string.match(unitFrame.unit, "party") then
     function unitFrame:GROUP_ROSTER_UPDATE()
       if _G.UnitExists(self.unit) then
@@ -189,14 +269,18 @@ function createUnitFrame(attributes)
       end
     end
     unitFrame:RegisterUnitEvent("PARTY_MEMBER_DISABLE", unitFrame.unit)
+
   elseif _G.string.match(unitFrame.unit, "raid") then
-
-  elseif _G.string.match(unitFrame.unit, "arena") then
-
+    -- Not implemented.
   end
   --------------------------------------------------------------------------------------------------
 
-  _G.RegisterUnitWatch(unitFrame)
+  if not unitFrame:HasScript("OnShow") then
+    unitFrame:SetScript("OnShow", function(self) end)
+  end
+  unitFrame:HookScript("OnShow", function(self)
+    self:update()
+  end)
 
   unitFrame:SetScript("OnEnter", function(self, motion)
     self:SetBackdropBorderColor(1.0, 1.0, 1.0, 1.0)

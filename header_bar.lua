@@ -35,6 +35,8 @@ function createHeaderBar(unit, mirror)
     statusBar:SetMinMaxValues(0, 1)
     statusBar:SetValue(0)
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+    statusBar:SetMinMaxValues(0, 1)
+    statusBar:SetValue(0)
   end
 
   headerBar.healthStatusBar= _G.CreateFrame("StatusBar", nil, headerBar)
@@ -49,6 +51,8 @@ function createHeaderBar(unit, mirror)
     statusBar:SetValue(1)
     statusBar:SetStatusBarColor(settings.colors.background.r, settings.colors.background.g,
       settings.colors.background.b, settings.colors.background.a)
+    statusBar:SetMinMaxValues(0, 1)
+    statusBar:SetValue(1)
   end
 
   headerBar.incomingStatusBar= _G.CreateFrame("StatusBar", nil, headerBar)
@@ -63,6 +67,8 @@ function createHeaderBar(unit, mirror)
     statusBar:SetMinMaxValues(0, 1)
     statusBar:SetValue(0)
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+    statusBar:SetMinMaxValues(0, 1)
+    statusBar:SetValue(0)
   end
 
   headerBar.leftFontString = headerBar.healthStatusBar:CreateFontString(nil, nil,
@@ -97,10 +103,16 @@ function createHeaderBar(unit, mirror)
 
   local function onShow(self)
     self.rangeTag:enable()
+    self.nameTag:enable()
+    self.arenaIDTag:enable()
+    self.specTag:enable()
   end
 
   local function onHide(self)
     self.rangeTag:disable()
+    self.nameTag:disable()
+    self.arenaIDTag:disable()
+    self.specTag:disable()
   end
 
   function headerBar:initialize(unit)
@@ -111,11 +123,28 @@ function createHeaderBar(unit, mirror)
         self:realignTags()
       end
     end)
-    registerTag(tagGroups.name, unit, function(text)
-      self.leftFontString:SetText(text)
-      self:realignTags()
-    end)
-    registerTag(tagGroups.spec, unit, function(text)
+    do
+      local nameText, arenaID
+      self.nameTag = NameTag:new(unit, function(text)
+        nameText = text
+        if arenaID then
+          self.leftFontString:SetText("[" .. arenaID .. "] " .. nameText)
+        else
+          self.leftFontString:SetText(nameText)
+        end
+        self:realignTags()
+      end)
+      self.arenaIDTag = ArenaIDTag:new(unit, function(text)
+        arenaID = text
+        if arenaID then
+          self.leftFontString:SetText("[" .. arenaID .. "] " .. nameText)
+        else
+          self.leftFontString:SetText(nameText)
+        end
+        self:realignTags()
+      end)
+    end
+    self.specTag = SpecTag:new(unit, function(text)
       self.centerFontString:SetText(text)
       self:realignTags()
     end)
@@ -127,19 +156,13 @@ function createHeaderBar(unit, mirror)
     if self:IsVisible() then
       self:GetScript("OnShow")(self)
     end
-
-    self.healthMissingStatusBar:SetMinMaxValues(0, 1)
-    self.healthMissingStatusBar:SetValue(0)
-    self.healthStatusBar:SetMinMaxValues(0, 1)
-    self.healthStatusBar:SetValue(1)
-    self.incomingStatusBar:SetMinMaxValues(0, 1)
-    self.incomingStatusBar:SetValue(0)
   end
 
   function headerBar:update(unit)
     self.rangeTag:update()
-    tagGroups.name.update(unit)
-    tagGroups.spec.update(unit)
+    self.nameTag:update()
+    self.arenaIDTag:update()
+    self.specTag:update()
 
     local healthMax, totalAbsorbs
     if _G.UnitIsConnected(unit) then

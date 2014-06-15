@@ -12,6 +12,10 @@ function createPowerBar(unit, mirror)
       statusBar:SetReverseFill(true)
     end
     statusBar:SetStatusBarTexture(settings.barTexture)
+    local color = settings.colors.noPower
+    statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+    statusBar:SetMinMaxValues(0, 1)
+    statusBar:SetValue(0)
   end
 
   powerBar.powerMissingStatusBar = _G.CreateFrame("StatusBar", nil, powerBar)
@@ -24,6 +28,8 @@ function createPowerBar(unit, mirror)
     statusBar:SetStatusBarTexture(settings.barTexture)
     local color = settings.colors.powerBarBackground
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+    statusBar:SetMinMaxValues(0, 1)
+    statusBar:SetValue(1)
   end
 
   --------------------------------------------------------------------------------------------------
@@ -34,7 +40,7 @@ function createPowerBar(unit, mirror)
   function powerBar:UNIT_DISPLAYPOWER(unit)
     local powerMax = _G.UnitPowerMax(unit)
     if powerMax and powerMax > 0 then
-      local powerToken, altR, altG, altB = _G.select(2, _G.UnitPowerType(unit))
+      local _, powerToken, altR, altG, altB = _G.UnitPowerType(unit)
       local color = powerToken and settings.powerColors[powerToken] or nil
       if color then
         self.powerStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
@@ -43,8 +49,8 @@ function createPowerBar(unit, mirror)
       end
       -- See http://wowprogramming.com/docs/api/UnitPowerType
     else
-      local powerColor = settings.colors.noPower
-      self.powerStatusBar:SetStatusBarColor(powerColor.r, powerColor.g, powerColor.b, powerColor.a)
+      local color = settings.colors.noPower
+      self.powerStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
     end
     self:UNIT_MAXPOWER(unit)
     self:UNIT_POWER_FREQUENT(unit)
@@ -86,13 +92,42 @@ function createPowerBar(unit, mirror)
   powerBar:RegisterUnitEvent("UNIT_POWER_FREQUENT", unit)
 
   function powerBar:update(unit)
-    if _G.UnitIsConnected(unit) then
-      self:UNIT_DISPLAYPOWER(unit)
-      self:UNIT_POWER_FREQUENT(unit)
-    else
+    if _G.UnitExists(unit) and _G.UnitIsConnected(unit) then
+        self:UNIT_DISPLAYPOWER(unit)
+        self:UNIT_POWER_FREQUENT(unit)
+    elseif (_G.select(2, _G.IsInInstance())) == "arena" then
       self.powerStatusBar:SetMinMaxValues(0, 1)
-      self.powerStatusBar:SetValue(0)
       self.powerMissingStatusBar:SetMinMaxValues(0, 1)
+      local specID
+      for i = 1, _G.MAX_ARENA_ENEMIES do
+        if unit == "arena" .. i then
+          specID = _G.GetArenaOpponentSpec(i)
+          break
+        end
+      end
+      if specID and specID > 0 then
+        local powerToken = powerTokens[specID]
+        local color = powerToken and settings.powerColors[powerToken] or nil
+        if not color then
+          color = settings.colors.noPower
+        end
+        self.powerStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+        if powerToken then
+          if powerToken == "MANA" or powerToken == "FOCUS" or powerToken == "ENERGY" then
+            self.powerStatusBar:SetValue(1)
+            self.powerMissingStatusBar:SetValue(0)
+          elseif powerToken == "RAGE" or powerToken == "RUNIC_POWER" then
+            self.powerStatusBar:SetValue(0)
+            self.powerMissingStatusBar:SetValue(1)
+          end
+        end
+      end
+    else
+      local color = settings.colors.noPower
+      self.powerStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+      self.powerStatusBar:SetMinMaxValues(0, 1)
+      self.powerMissingStatusBar:SetMinMaxValues(0, 1)
+      self.powerStatusBar:SetValue(0)
       self.powerMissingStatusBar:SetValue(1)
     end
   end

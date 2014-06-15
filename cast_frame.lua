@@ -69,12 +69,11 @@ function createCastFrame(attributes)
   end)
 
   function castFrame:UNIT_CONNECTION(unit, hasConnected)
-    _G.assert(_G.UnitIsUnit(unit, self.unit))
     self:update()
   end
 
   function castFrame:UNIT_SPELLCAST_START(unit, spell, _, castID, spellID)
-    if not _G.UnitIsUnit(unit, self.unit) then return end
+    _G.assert(_G.UnitIsUnit(unit, self.unit))
 
     local spell, _, text, texture, startTime, endTime, _, castID, notInterruptible = _G.UnitCastingInfo(unit)
     if not spell then
@@ -107,22 +106,23 @@ function createCastFrame(attributes)
   end
 
   function castFrame:UNIT_SPELLCAST_STOP(unit, spell, _, castID, spellID)
-    if not _G.UnitIsUnit(unit, self.unit) then return end
+    _G.assert(_G.UnitIsUnit(unit, self.unit))
     self.casting = false
     self:Hide()
   end
 
   function castFrame:UNIT_SPELLCAST_FAILED(unit, spell, _, castID, spellID)
+    _G.assert(_G.UnitIsUnit(unit, self.unit))
     -- ...
   end
 
   function castFrame:UNIT_SPELLCAST_INTERRUPTED(unit, spell, _, castID, spellID)
+    _G.assert(_G.UnitIsUnit(unit, self.unit))
     -- ...
   end
 
   function castFrame:UNIT_SPELLCAST_DELAYED(unit, spell, rank, castID, spellID)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
-    if not _G.UnitIsUnit(unit, self.unit) then return end
     if not self:IsShown() then return end
     -- This is done in CastingBarFrame.lua from the Blizzard UI. Maybe there's something they know
     -- and I don't.
@@ -134,26 +134,24 @@ function createCastFrame(attributes)
   end
 
   function castFrame:UNIT_SPELLCAST_SUCCEEDED(unit, spell, _, castID, spellID)
+    _G.assert(_G.UnitIsUnit(unit, self.unit))
     -- ...
   end
 
   function castFrame:UNIT_SPELLCAST_INTERRUPTIBLE(unit)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
-    if not _G.UnitIsUnit(unit, self.unit) then return end
     local color = settings.colors.casting
     self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
   end
 
   function castFrame:UNIT_SPELLCAST_NOT_INTERRUPTIBLE(unit)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
-    if not _G.UnitIsUnit(unit, self.unit) then return end
     local color = settings.colors.castingNotInterruptible
     self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
   end
 
   function castFrame:UNIT_SPELLCAST_CHANNEL_START(unit, spell, rank, castID, spellID)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
-    if not _G.UnitIsUnit(unit, self.unit) then return end
 
     local spell, _, text, texture, startTime, endTime, _, notInterruptible = _G.UnitChannelInfo(unit)
     if not spell then
@@ -234,30 +232,26 @@ function createCastFrame(attributes)
     end
   end
 
-  local function enable()
-    castFrame:RegisterUnitEvent("UNIT_CONNECTION", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_STOP", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_DELAYED", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTIBLE", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", unit)
-    castFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", unit)
+  function castFrame:initialize()
+    self:RegisterUnitEvent("UNIT_CONNECTION", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_START", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_STOP", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_DELAYED", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTIBLE", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", self.unit)
+    self:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", self.unit)
 
-    castFrame:SetScript("OnUpdate", onUpdate)
-  end
+    -- The OnUpdate handler is only run if the frame is visible!
+    self:SetScript("OnUpdate", onUpdate)
 
-  local function disable()
-    castFrame:UnregisterAllEvents()
-    castFrame:SetScript("OnUpdate", nil)
-  end
-
-  function castFrame:initialize(unit)
-    enable()
+    self:SetScript("OnShow", function(self)
+      self:update()
+    end)
   end
 
   function castFrame:PLAYER_LOGIN()
@@ -293,22 +287,16 @@ function createCastFrame(attributes)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
     self:update()
   end
+  castFrame:RegisterUnitEvent("UNIT_NAME_UPDATE", castFrame.unit)
 
   function castFrame:UNIT_PHASE(unit)
     self:update()
   end
-
-  function castFrame:UNIT_CONNECTION(unit, hasConnected)
-    self:update()
-  end
+  castFrame:RegisterUnitEvent("UNIT_PHASE", castFrame.unit)
 
   function castFrame:PLAYER_ENTERING_WORLD()
     self:update()
   end
-
-  castFrame:RegisterUnitEvent("UNIT_NAME_UPDATE", castFrame.unit)
-  castFrame:RegisterUnitEvent("UNIT_PHASE", castFrame.unit)
-  castFrame:RegisterUnitEvent("UNIT_CONNECTION", castFrame.unit)
   castFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
   if castFrame.unit == "player" then

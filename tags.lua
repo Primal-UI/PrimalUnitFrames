@@ -1,38 +1,11 @@
 setfenv(1, NinjaKittyUF)
 
-tagGroups = {}
-
-function registerTag(tagGroup, unit, callback)
-  tagGroup.registerUnit(unit, callback)
-end
-
 -- Prototype.
-NameTag = {}
+NameTag = {
+  tags = {},
+}
 
 do
-  tagGroups.name = {
-    registerUnit = function(unit, callback)
-      tagGroups.name.tags[unit] = {
-        callback = callback,
-        nameText = "",
-      }
-    end,
-    unregisterUnit = function(unit)
-      tagGroups.name.tags[unit] = nil
-    end,
-    tags = {},
-  }
-
-  function NameTag:new(unit, callback)
-    return tagGroups.name.registerUnit(unit, callback)
-  end
-
-  function NameTag:update()
-    return tagGroup.name.update()
-  end
-
-  local tagGroup = tagGroups.name
-
   -- Taken from http://wowprogramming.com/snippets/UTF-8_aware_stringsub_7.
   local function charSize(byte)
     if byte > 240 then
@@ -62,9 +35,23 @@ do
   -- http://www.wowhead.com/forums&topic=204361/lua-code-limit-name-characters Significant events:
   -- UNIT_NAME_UPDATE, UNIT_TARGETABLE_CHANGED, UNIT_FACTION. One of those events fires when the
   -- unit is tapped.
-  local function getNameText(unit)
+  function NameTag:getNameText()
+    local unit = self.unit
     local color = "ffffffff"
-    if _G.UnitIsPlayer(unit) then
+    if not _G.UnitExists(unit) and (_G.select(2, _G.IsInInstance())) == "arena" then
+      local specID
+      --for i = 1, _G.MAX_ARENA_ENEMIES do
+      for i = 1, _G.GetNumArenaOpponentSpecs() do
+        if unit == "arena" .. i then
+          specID = _G.GetArenaOpponentSpec(i)
+          break
+        end
+      end
+      if specID and specID > 0 then
+        _, _, _, _, _, _, class = _G.GetSpecializationInfoByID(specID)
+        color = class and settings.classColors[class].colorStr or "ffffffff"
+      end
+    elseif _G.UnitIsPlayer(unit) then
       local class = (_G.select(2, _G.UnitClassBase(unit)))
       color = class and settings.classColors[class].colorStr or "ffffffff"
     -- Similar to code from TargetFrame_CheckFaction() from Blizzard's TargetFrame.lua.  See
@@ -78,7 +65,7 @@ do
     local name = (_G.UnitName(unit))
     --local name = _G.GetUnitName(unit)
     if not name or name == "" then
-      return settings.unknownName
+      return "|c" .. color .. settings.strings.unknown .. "|r"
     end
 
     -- Don't abbreviate player names. Don't abbreviate strings containing multi-byte Unicode
@@ -91,6 +78,7 @@ do
     -- We have to check both these functions because UnitIsPlayer() returns 1 for some NPCs (e.g.
     -- Sikari the Mistweaver).
     if _G.UnitPlayerControlled(unit) and _G.UnitIsPlayer(unit) then
+      --[[
       if (_G.select(2, _G.GetInstanceInfo())) == "arena" then
         for i = 1, _G.GetNumArenaOpponents() do
           if _G.UnitIsUnit(unit, "arena" .. i) then
@@ -98,6 +86,7 @@ do
           end
         end
       end
+      ]]
       return "|c" .. color .. name .. "|r"
     elseif not containsMultiByteChar(name) then
       local length = _G.string.len(name)
@@ -138,15 +127,26 @@ do
     end
   end
 
-  tagGroup.update = function(unit)
-    local tag = tagGroup.tags[unit]
-    tag.nameText = getNameText(unit)
-    tag.callback(tag.nameText)
+  function NameTag:new(unit, callback) -- Constructor.
+    local object = _G.setmetatable({}, { __index = self })
+    object.unit = unit
+    object.callback = callback
+    object.text = ""
+    return object
   end
 
-  tagGroup.reset = function(unit)
-    local tag = tagGroup.tags[unit]
-    tag.callback(tag.nameText)
+  function NameTag:enable()
+    self.tags[self.unit] = self
+    self:update()
+  end
+
+  function NameTag:disable()
+    self.tags[self.unit] = nil
+  end
+
+  function NameTag:update()
+    self.text = self:getNameText()
+    self.callback(self.text)
   end
 
   local f = _G.CreateFrame("Frame")
@@ -155,23 +155,72 @@ do
   end)
 
   function f:UNIT_NAME_UPDATE(unit)
-    if not tagGroup.tags[unit] then return end
-    tagGroup.update(unit)
+    local tag = NameTag.tags[unit]
+    if not tag then return end
+    tag:update()
   end
 
   function f:UNIT_TARGETABLE_CHANGED(unit)
-    if not tagGroup.tags[unit] then return end
-    tagGroup.update(unit)
+    local tag = NameTag.tags[unit]
+    if not tag then return end
+    tag:update()
   end
 
   function f:UNIT_FACTION(unit)
-    if not tagGroup.tags[unit] then return end
-    tagGroup.update(unit)
+    local tag = NameTag.tags[unit]
+    if not tag then return end
+    tag:update()
   end
 
   f:RegisterEvent("UNIT_NAME_UPDATE")
   f:RegisterEvent("UNIT_TARGETABLE_CHANGED")
   f:RegisterEvent("UNIT_FACTION")
+end
+
+-- Prototype.
+ArenaIDTag = {
+  tags = {},
+}
+
+do
+  local function getArenaID(unit)
+    if (_G.select(2, _G.GetInstanceInfo())) == "arena" then
+      --if _G.UnitPlayerControlled(unit) and _G.UnitIsPlayer(unit) then
+        --for i = 1, _G.GetNumArenaOpponents() do
+        for i = 1, _G.GetNumArenaOpponentSpecs() do
+        --for i = 1, _G.MAX_ARENA_ENEMIES do
+          --if _G.UnitIsUnit(unit, "arena" .. i) then
+          if unit == "arena" .. i then
+            return _G.tostring(i)
+          end
+        --end
+      end
+    else
+      return nil
+    end
+  end
+
+  function ArenaIDTag:new(unit, callback) -- Constructor.
+    local object = _G.setmetatable({}, { __index = self })
+    object.unit = unit
+    object.callback = callback
+    object.text = ""
+    return object
+  end
+
+  function ArenaIDTag:enable()
+    self.tags[self.unit] = self
+    self:update()
+  end
+
+  function ArenaIDTag:disable()
+    self.tags[self.unit] = nil
+  end
+
+  function ArenaIDTag:update()
+    self.text = getArenaID(self.unit)
+    self.callback(self.text)
+  end
 end
 
 -- Prototype.
@@ -208,8 +257,9 @@ do
 
   function RangeTag:update()
     self:disable()
-    if not _G.UnitExists(self.unit) then return end
-    if _G.UnitIsConnected(self.unit) then
+    if not _G.UnitExists(self.unit) then
+      return
+    elseif _G.UnitIsConnected(self.unit) then
       RangeTag.activeTags[self.unit] = self
       local color
       if _G.UnitIsUnit(self.unit .. "target", "player") then
@@ -221,32 +271,34 @@ do
       if color ~= self.color or rangeText ~= self.text then
         self.color = color
         self.text = rangeText
-        self.callback("|c" .. color .. rangeText .. "|r")
+        self.callback("|c" .. self.color .. self.text .. "|r")
       end
     else
       RangeTag.idleTags[self.unit] = self
       if self.text ~= "Offline" or self.color ~= "ffffffff" then
           self.text = "Offline"
           self.color = "ffffffff"
-          self.callback("Offline")
+          self.callback("|c" .. self.color .. self.text .. "|r")
       end
     end
   end
 
   function RangeTag:disable()
+    self.text = "0+"
+    self.color = "ffffffff"
+    self.callback("|c" .. self.color .. self.text .. "|r")
     RangeTag.activeTags[self.unit] = nil
     RangeTag.idleTags[self.unit] = nil
   end
 
   function RangeTag:enable()
-    _G.assert(_G.UnitExists(self.unit))
     self:disable()
-    if _G.UnitIsConnected(self.unit) then
+    if _G.UnitExists(self.unit) and _G.UnitIsConnected(self.unit) then
       RangeTag.activeTags[self.unit] = self
     else
       RangeTag.idleTags[self.unit] = self
     end
-    --self:update()
+    self:update()
   end
 
   function RangeTag:onUpdate()
@@ -254,7 +306,7 @@ do
       local rangeText = getRangeText(unit)
       if rangeText ~= tag.text then
         tag.text = rangeText
-        tag.callback("|c" .. tag.color .. rangeText .. "|r")
+        tag.callback("|c" .. tag.color .. tag.text .. "|r")
       end
     end
   end
@@ -279,7 +331,7 @@ do
         if color ~= tag.color or rangeText ~= tag.text then
           tag.color = color
           tag.text = rangeText
-          tag.callback("|c" .. color .. rangeText .. "|r")
+          tag.callback("|c" .. tag.color .. tag.text .. "|r")
         end
       end
     end
@@ -299,7 +351,7 @@ do
     if color ~= tag.color or rangeText ~= tag.text then
       tag.color = color
       tag.text = rangeText
-      tag.callback("|c" .. color .. rangeText .. "|r")
+      tag.callback("|c" .. tag.color .. tag.text .. "|r")
     end
   end
 
@@ -314,162 +366,42 @@ do
   frame:RegisterEvent("UNIT_CONNECTION")
 end
 
---[[
-do
-  tagGroups.range = {
-    registerUnit = function(unit, callback)
-      if _G.UnitIsConnected(unit) then
-        tagGroups.range.tags[unit] = {
-          callback = callback,
-          color = "ffffffff",
-          text = "",
-        }
-      else
-        tagGroups.range.idleTags[unit] = {
-          callback = callback,
-          color = "ffffffff",
-          text = "Offline",
-        }
-      end
-    end,
-    unregisterUnit = function(unit)
-      tagGroups.range.idleTags[unit] = ragGroup.range.tags[unit]
-      tagGroups.range.tags[unit] = nil
-    end,
-    tags = {},
-    idleTags = {},
-  }
-
-  local tagGroup = tagGroups.range
-
-  tagGroup.update = function(unit)
-    if _G.UnitIsConnected(unit) and not tagGroup.tags[unit] then
-      _G.assert(tagGroup.idleTags[unit])
-      tagGroup.tags[unit] = tagGroup.idleTags[unit]
-      tagGroup.idleTags[unit] = nil
-    elseif not _G.UnitIsConnected(unit) then
-      if tagGroup.tags[unit] then
-        tagGroup.tags[unit].text = "Offline"
-        tagGroup.idleTags[unit] = tagGroup.tags[unit]
-        tagGroup.tags[unit] = nil
-      end
-      tagGroup.idleTags[unit].callback(tagGroup.idleTags[unit].text)
-      return
-    end
-
-    local tag = tagGroup.tags[unit]
-    if tag then
-      local color
-      if _G.UnitIsUnit(unit .. "target", "player") then
-        color = "ffe00000"
-      else
-        color = "ffffffff"
-      end
-      local rangeText = getRangeText(unit)
-      if color ~= tag.color or rangeText ~= tag.text then
-        tag.color = color
-        tag.text = rangeText
-        tag.callback("|c" .. color .. rangeText .. "|r")
-      end
-    end
-  end
-
-  tagGroup.reset = function(unit)
-    local tag = tagGroup.tags[unit] or tagGroup.idleTags[unit]
-    tag.callback(tag.text)
-  end
-
-  local f = _G.CreateFrame("Frame")
-  f:SetScript("OnEvent", function(self, event, ...)
-    return self[event](self, ...)
-  end)
-
-  function f:PLAYER_TARGET_CHANGED(cause)
-    for unit, tag in _G.pairs(tagGroup.tags) do
-      if _G.UnitExists(unit) and _G.UnitIsUnit(unit, "player") then
-        local color
-        if _G.UnitIsUnit(unit .. "target", "player") then
-          color = "ffe00000"
-        else
-          color = "ffffffff"
-        end
-        local rangeText = getRangeText(unit)
-        if color ~= tag.color or rangeText ~= tag.text then
-          tag.color = color
-          tag.text = rangeText
-          tag.callback("|c" .. color .. rangeText .. "|r")
-        end
-      end
-    end
-  end
-
-  function f:UNIT_TARGET(unit, cause)
-    if not tagGroup.tags[unit] then return end
-    if _G.UnitIsUnit(unit, "player") then return end -- Done that.
-
-    local tag = tagGroup.tags[unit]
-
-    local color
-    if _G.UnitIsUnit(unit .. "target", "player") then
-      color = "ffe00000"
-    else
-      color = "ffffffff"
-    end
-    local rangeText = getRangeText(unit)
-    if color ~= tag.color or rangeText ~= tag.text then
-      tag.color = color
-      tag.text = rangeText
-      tag.callback("|c" .. color .. rangeText .. "|r")
-    end
-  end
-
-  f:RegisterEvent("PLAYER_TARGET_CHANGED")
-  f:RegisterEvent("UNIT_TARGET")
-
-  f:SetScript("OnUpdate", function(self, elapsed)
-    for unit, tag in _G.pairs(tagGroup.tags) do
-      if _G.UnitExists(unit) then
-        local rangeText = getRangeText(unit)
-        if rangeText ~= tag.text then
-          tag.text = rangeText
-          tag.callback("|c" .. tag.color .. rangeText .. "|r")
-        end
-      end
-    end
-  end)
-end
-]]
+-- Prototype.
+SpecTag = {
+  tags = {},
+}
 
 do
-  tagGroups.spec = {
-    registerUnit = function(unit, callback)
-      tagGroups.spec.tags[unit] = {
-        callback = callback,
-        role = nil,
-        text = "",
-      }
-    end,
-    unregisterUnit = function(unit)
-      tagGroups.spec.tags[unit] = nil
-    end,
-    tags = {},
-  }
+  function SpecTag:new(unit, callback) -- Constructor.
+    local object = _G.setmetatable({}, { __index = self })
+    object.unit = unit
+    object.callback = callback
+    object.text = ""
+    return object
+  end
 
-  local tagGroup = tagGroups.spec
+  function SpecTag:enable()
+    self.tags[self.unit] = self
+    self:update()
+  end
+
+  function SpecTag:disable()
+    self.tags[self.unit] = nil
+  end
 
   -- http://wowprogramming.com/docs/api_types#specID
   local specNames = {
-    [62] = "Arcane", [63] = "Fire", [64] = "Frost",
-    [65] = "Holy", [66] = "Prot", [70] = "Ret",
-    [71] = "Arms", [72] = "Fury", [73] = "Prot",
-    [102] = "Balance", [103] = "Feral", [104] = "Guardian", [105] = "Resto",
-    [250] = "Blood", [251] = "Frost", [252] = "Unh",
-    [253] = "BM", [254] = "MM", [255] = "Surv",
-    [256] = "Disc", [257] = "Holy", [258] = "Shadow",
-    [259] = "Ass", [260] = "Combat", [261] = "Sub",
-    [262] = "Ele", [263] = "Enh", [264] = "Resto",
-    [265] = "Aff", [266] = "Demo", [267] = "Destro",
-    [268] = "BM", [269] = "WW", [270] = "MW",
+    [62] = "Arcane", [63] = "Fire", [64] = "Frost", -- Mage
+    [65] = "Holy", [66] = "Prot", [70] = "Ret", -- Paladin
+    [71] = "Arms", [72] = "Fury", [73] = "Prot", -- Warrior
+    [102] = "Balance", [103] = "Feral", [104] = "Guardian", [105] = "Resto", -- Druid
+    [250] = "Blood", [251] = "Frost", [252] = "Unh", -- Death Knight
+    [253] = "BM", [254] = "MM", [255] = "Surv", -- Hunter
+    [256] = "Disc", [257] = "Holy", [258] = "Shadow", -- Priest
+    [259] = "Ass", [260] = "Combat", [261] = "Sub", -- Rogue
+    [262] = "Ele", [263] = "Enh", [264] = "Resto", -- Shaman
+    [265] = "Aff", [266] = "Demo", [267] = "Destro", -- Warlock
+    [268] = "BM", [269] = "WW", [270] = "MW", -- Monk
   }
 
   -- Used to get abbreviated spec names from GetBattlefieldScore() which only returns localized spec
@@ -507,22 +439,27 @@ do
   -- will have extra energy, Prot and Ret Palas (similarly: Druids) will have low mana (60k at level
   -- 90), etc.  Significant events: UNIT_MAXPOWER UNIT_DISPLAYPOWER
   -- ARENA_PREP_OPPONENT_SPECIALIZATIONS ROLE_CHANGED_INFORM
-  local function getSpecText(unit)
-    if not _G.UnitIsConnected(unit) then return end
+  local function getSpecText(tag)
+    local unit = tag.unit
+    local instanceType = (_G.select(2, _G.IsInInstance()))
 
-    local tag = tagGroup.tags[unit]
-
-    local instanceType = _G.select(2, _G.IsInInstance())
     if instanceType == "arena" then
-      for i = 1, _G.GetNumArenaOpponents() do
+      local numOpps = _G.GetNumArenaOpponentSpecs()
+      local specId
+      for i = 1, numOpps do
         if _G.UnitIsUnit(unit, "arena" .. i) then
-          local specId = _G.GetArenaOpponentSpec(i)
-          if specId then
-            return specNames[specId]
-          end
+          specId = _G.GetArenaOpponentSpec(i)
+          break
         end
       end
-    elseif instanceType == "pvp" then
+      if specId then
+        return specNames[specId]
+      end
+    end
+
+    if not _G.UnitExists(unit) or not _G.UnitIsConnected(unit) then return end
+
+    if instanceType == "pvp" then
       local spec = battlegroundSpecs[_G.GetUnitName(unit, true)]
       if spec then
         return specNames[specIDs[spec]]
@@ -565,16 +502,10 @@ do
     return "|c" .. colorStr .. powerMaxStr .. "|r"
   end
 
-  tagGroup.update = function(unit)
-    local tag = tagGroup.tags[unit]
-    tag.role = _G.UnitGroupRolesAssigned(unit)
-    tag.text = getSpecText(unit)
-    tag.callback(tag.text)
-  end
-
-  tagGroup.reset = function(unit)
-    local tag = tagGroup.tags[unit]
-    tag.callback(tag.text)
+  function SpecTag:update()
+    self.role = _G.UnitGroupRolesAssigned(self.unit)
+    self.text = getSpecText(self)
+    self.callback(self.text)
   end
 
   local f = _G.CreateFrame("Frame")
@@ -583,8 +514,9 @@ do
   end)
 
   function f:UNIT_MAXPOWER(unit)
-    if not tagGroup.tags[unit] then return end
-    tagGroup.update(unit)
+    local tag = SpecTag.tags[unit]
+    if not tag then return end
+    tag:update()
   end
 
   -- From http://wowprogramming.com/docs/events/ROLE_CHANGED_INFORM: "[u]se the additional arguments
@@ -593,18 +525,18 @@ do
   function f:ROLE_CHANGED_INFORM(changedPlayer, changedBy, oldRole, newRole)
     -- changedPlayer is the name of the unit whose role has changed. UnitIsUnit() does accept unit
     -- names. See http://wowprogramming.com/docs/api_types#unitID
-    for unit, tag in _G.pairs(tagGroup.tags) do
+    for unit, tag in _G.pairs(SpecTag.tags) do
       if _G.UnitIsUnit(unit, changedPlayer) then
         tag.role = newRole
-        tag.text = getSpecText(unit)
+        tag.text = getSpecText(tag)
         tag.callback(tag.text)
       end
     end
   end
 
   function f:ARENA_PREP_OPPONENT_SPECIALIZATIONS(...)
-    for unit, tag in _G.pairs(tagGroup.tags) do
-      tagGroup.update(unit)
+    for _, tag in _G.pairs(SpecTag.tags) do
+      tag:update()
     end
   end
 
@@ -613,14 +545,15 @@ do
   -- calling GetBattlefieldScore() and related functions.
   function f:UPDATE_BATTLEFIELD_SCORE()
     if pendingScoreDataRequests <= 0 then return end
+
     pendingScoreDataRequests = pendingScoreDataRequests - 1
     local numScores = _G.GetNumBattlefieldScores() -- Returns 0 if not in a battleground.
     for i = 1, numScores do
       local name, _, _, _, _, _, _, _, _, _, _, _, _, _, _, talentSpec = _G.GetBattlefieldScore(i)
       battlegroundSpecs[name] = talentSpec
     end
-    for unit, tag in _G.pairs(tagGroup.tags) do
-      local text = getSpecText(unit)
+    for unit, tag in _G.pairs(SpecTag.tags) do
+      local text = getSpecText(tag)
       if text ~= tag.text then
         tag.text = text
         tag.callback(text)
@@ -633,6 +566,13 @@ do
   f:RegisterEvent("ARENA_PREP_OPPONENT_SPECIALIZATIONS")
   f:RegisterEvent("UPDATE_BATTLEFIELD_SCORE")
 end
+
+--[==[
+function registerTag(tagGroup, unit, callback)
+  return tagGroup.registerUnit(unit, callback)
+end
+
+tagGroups = {}
 
 do
   tagGroups.kittyPower = {
@@ -664,7 +604,9 @@ do
     return "|c" .. colorStr .. powerStr .. "|r"
   end
 end
+--]==]
 
+--[==[
 do
   tagGroups.health = {
     registerUnit = function(unit, callback)
@@ -766,5 +708,6 @@ do
     tagGroup.update(unit)
   end
 end
+--]==]
 
--- vim: tw=100 sw=2 et
+-- vim: tw=100 sw=2 ts=2 et

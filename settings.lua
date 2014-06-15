@@ -6,7 +6,6 @@ settings = {
   insets = { left = 1, right = 1, top = 1, bottom = 1 },
   fontSpacing = 2,
   classColors = _G.RAID_CLASS_COLORS,
-  unknownName = "Unknown",
   barTexture = [[Interface\AddOns\NinjaKittyUF\media\textures\plain_white]],
   defaultFont = _G.CreateFont("NKUFDefaultFont"),
   fontSize = 11,
@@ -14,13 +13,13 @@ settings = {
     dead    = "Dead",
     ghost   = "Ghost",
     offline = "Offline",
+    unknown = "Unknown",
   },
   colors = {
     background = { r = 0, g = 0, b = 0, a = 0.5, colorStr = "80000000" },
     casting = { r = 0.85, g = 0.25, b = 0.25, a = 0.75, colorStr = "bfd94040" },
-    --casting = { r = 0.5, g = 0.5, b = 0.5, a = 0.75, colorStr = "bf808080" },
-    --castingNotInterruptible = { r = 0.5, g = 0.0, b = 0.75, a = 0.75, colorStr = "bf8000bf" },
     castingNotInterruptible = { r = 0.75, g = 0.25, b = 0.85, a = 0.75, colorStr = "bfbf40d9" },
+    --castingNotInterruptible = { r = 0.5, g = 0.0, b = 0.75, a = 0.75, colorStr = "bf8000bf" },
     dead = { r = 0.75, g = 0.75, b = 0.75, a = 0.25, colorStr = "40bfbfbf" },
     incomingHeals = { r = 0.5, g = 0.5, b = 0.5, a = 0.75, colorStr = "bf808080" },
     incomingDark = { r = 0.25, g = 0.25, b = 0.25, a = 0.75, colorStr = "bf404040" },
@@ -33,15 +32,15 @@ settings = {
   },
   powerAlpha = 0.75,
   offlineColor = "ffffffff",
-  defaults = {},
+  defaults = {
+    width = 208,
+  },
   roles = {
     ["DAMAGER"] = "DPS",
     ["HEALER"] = "Healer",
     ["TANK"] = "Tank",
   },
 }
-
-settings.defaults.width = 208
 
 ----------------------------------------------------------------------------------------------------
 -- http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitFrame.lua
@@ -107,6 +106,7 @@ settings.headerBarBackdrop = {
   ]]
 }
 
+--[==[
 -- http://wowprogramming.com/docs/api_types#specID
 settings.specNames = {
   [62]  = "Arcane",
@@ -189,7 +189,7 @@ settings.nameTag = function(unit)
   local name = (_G.UnitName(unit))
   --local name = _G.GetUnitName(unit)
   if not name or name == "" then
-    return settings.unknownName
+    return settings.strings.unknown
   end
 
   -- Don't abbreviate player names. Don't abbreviate strings containing multi-byte Unicode
@@ -347,6 +347,7 @@ settings.powerMaxTag = function(unit)
 
   return "|c" .. colorStr .. powerMaxStr .. "|r"
 end
+]==]
 
 frameAttributes = {}
 
