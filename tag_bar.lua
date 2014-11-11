@@ -1,17 +1,13 @@
 setfenv(1, NinjaKittyUF)
 
 -- Prototype.
-HeaderBar = {
+TagBar = {
 
 }
 
-function HeaderBar:new(unit, leftTag, centerTag, rightTag)
+function TagBar:new(unit, leftTag, centerTag, rightTag)
   local bar = _G.setmetatable(_G.CreateFrame("Frame"), { __index = self})
   return bar
-end
-
-function HeaderBar:new(unit, attributes)
-  return createHeaderBar(unit, attributes.mirror)
 end
 
 function createHeaderBar(unit, mirror)
@@ -35,8 +31,6 @@ function createHeaderBar(unit, mirror)
     statusBar:SetMinMaxValues(0, 1)
     statusBar:SetValue(0)
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
-    statusBar:SetMinMaxValues(0, 1)
-    statusBar:SetValue(0)
   end
 
   headerBar.healthStatusBar= _G.CreateFrame("StatusBar", nil, headerBar)
@@ -51,8 +45,6 @@ function createHeaderBar(unit, mirror)
     statusBar:SetValue(1)
     statusBar:SetStatusBarColor(settings.colors.background.r, settings.colors.background.g,
       settings.colors.background.b, settings.colors.background.a)
-    statusBar:SetMinMaxValues(0, 1)
-    statusBar:SetValue(1)
   end
 
   headerBar.incomingStatusBar= _G.CreateFrame("StatusBar", nil, headerBar)
@@ -67,8 +59,6 @@ function createHeaderBar(unit, mirror)
     statusBar:SetMinMaxValues(0, 1)
     statusBar:SetValue(0)
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
-    statusBar:SetMinMaxValues(0, 1)
-    statusBar:SetValue(0)
   end
 
   headerBar.leftFontString = headerBar.healthStatusBar:CreateFontString(nil, nil,
@@ -124,8 +114,7 @@ function createHeaderBar(unit, mirror)
       end
     end)
     do
-      local nameText, arenaID = "", ""
-      --[[
+      local nameText, arenaID
       self.nameTag = NameTag:new(unit, function(text)
         nameText = text
         if arenaID then
@@ -144,29 +133,6 @@ function createHeaderBar(unit, mirror)
         end
         self:realignTags()
       end)
-      ]]
-      self.nameTag = NameTag:new(unit, function(text)
-        nameText = text
-        if arenaID and arenaID ~= "" then
-          self.leftFontString:SetText(arenaID .. " " .. nameText)
-        else
-          self.leftFontString:SetText(nameText)
-        end
-        self:realignTags()
-      end)
-      if _G.string.match(unit, "arena") then
-        self.arenaIDTag = TargetTag:new(unit, function(text)
-          arenaID = text
-          if arenaID and arenaID ~= "" then
-            self.leftFontString:SetText(arenaID .. " " .. nameText)
-          else
-            self.leftFontString:SetText(nameText)
-          end
-          self:realignTags()
-        end)
-      else
-        self.arenaIDTag = TargetTag:new(unit, function(text) end)
-      end
     end
     self.specTag = SpecTag:new(unit, function(text)
       self.centerFontString:SetText(text)
@@ -180,6 +146,13 @@ function createHeaderBar(unit, mirror)
     if self:IsVisible() then
       self:GetScript("OnShow")(self)
     end
+
+    self.healthMissingStatusBar:SetMinMaxValues(0, 1)
+    self.healthMissingStatusBar:SetValue(0)
+    self.healthStatusBar:SetMinMaxValues(0, 1)
+    self.healthStatusBar:SetValue(1)
+    self.incomingStatusBar:SetMinMaxValues(0, 1)
+    self.incomingStatusBar:SetValue(0)
   end
 
   function headerBar:update(unit)

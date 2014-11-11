@@ -223,11 +223,64 @@ do
   end
 end
 
+------------------------------------------------------------------------------------------------------------------------
+-- Prototype.
+TargetTag = {
+  tags = {},
+}
+
+TargetTag.__index = TargetTag
+
+do
+  function TargetTag:new(unit, callback) -- Constructor.
+    local object = _G.setmetatable({}, TargetTag)
+    object.unit = unit
+    object.callback = callback
+    object.text = ""
+    return object
+  end
+
+  function TargetTag:enable()
+    self.tags[self.unit] = self
+    self:update()
+  end
+
+  function TargetTag:disable()
+    self.tags[self.unit] = nil
+  end
+
+  function TargetTag:update()
+    if _G.UnitIsUnit(self.unit, "target") then
+      self.text = ">>"
+    else
+      self.text = ""
+    end
+    self.callback(self.text)
+  end
+
+  local f = _G.CreateFrame("Frame")
+  f:SetScript("OnEvent", function(self, event, ...)
+    return self[event](self, ...)
+  end)
+
+  function f:PLAYER_TARGET_CHANGED(cause)
+    -- TODO: only update tags for previous and new target?
+    for _, tag in _G.pairs(TargetTag.tags) do
+      tag:update()
+    end
+  end
+
+  f:RegisterEvent("PLAYER_TARGET_CHANGED")
+end
+------------------------------------------------------------------------------------------------------------------------
+
 -- Prototype.
 RangeTag = {
   activeTags = {},
   idleTags = {},
 }
+
+RangeTag.__index = RangeTag
 
 do
   -- http://www.wowace.com/addons/libstub
@@ -238,7 +291,7 @@ do
     local minRange, maxRange = rangeChecker:GetRange(unit)
 
     if not minRange then
-      return ""
+      return "0+"
     elseif minRange and not maxRange then
       return minRange .. "+"
     elseif minRange and maxRange then
@@ -247,11 +300,11 @@ do
   end
 
   function RangeTag:new(unit, callback) -- Constructor.
-    local object = _G.setmetatable({}, { __index = self })
+    local object = _G.setmetatable({}, RangeTag)
     object.unit = unit
     object.callback = callback
     object.color = "ffffffff"
-    object.text = nil
+    object.text = "0+"
     return object
   end
 
@@ -261,12 +314,17 @@ do
       return
     elseif _G.UnitIsConnected(self.unit) then
       RangeTag.activeTags[self.unit] = self
+
       local color
+      --[[
       if _G.UnitIsUnit(self.unit .. "target", "player") then
         color = "ffe00000"
       else
         color = "ffffffff"
       end
+      ]]
+      color = "ffffffff"
+
       local rangeText = getRangeText(self.unit)
       if color ~= self.color or rangeText ~= self.text then
         self.color = color
@@ -321,12 +379,17 @@ do
   function frame:PLAYER_TARGET_CHANGED(cause)
     for unit, tag in _G.pairs(RangeTag.activeTags) do
       if _G.UnitExists(unit) and _G.UnitIsUnit(unit, "player") then
+
         local color
+        --[[
         if _G.UnitIsUnit(unit .. "target", "player") then
           color = "ffe00000"
         else
           color = "ffffffff"
         end
+        ]]
+        color = "ffffffff"
+
         local rangeText = getRangeText(unit)
         if color ~= tag.color or rangeText ~= tag.text then
           tag.color = color
@@ -342,11 +405,15 @@ do
     if not tag or _G.UnitIsUnit(unit, "player") then return end
 
     local color
+    --[[
     if _G.UnitIsUnit(unit .. "target", "player") then
       color = "ffe00000"
     else
       color = "ffffffff"
     end
+    ]]
+    color = "ffffffff"
+
     local rangeText = getRangeText(unit)
     if color ~= tag.color or rangeText ~= tag.text then
       tag.color = color
@@ -567,4 +634,4 @@ do
   f:RegisterEvent("UPDATE_BATTLEFIELD_SCORE")
 end
 
--- vim: tw=100 sw=2 ts=2 et
+-- vim: tw=120 sw=2 ts=2 et

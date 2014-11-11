@@ -106,6 +106,12 @@ function createAltPowerFrame(attributes)
   function altPowerFrame:UNIT_POWER_BAR_SHOW(unit)
     if unit ~= self.unit then return end
     self:UNIT_MAXPOWER(self.unit, "ALTERNATE")
+    --[[
+    local powerName = (_G.select(10, _G.UnitAlternatePowerInfo(unit)))
+    self.tagFrame.fontString:SetText(powerName)
+    self.tagFrame.fontString:SetWidth(self.tagFrame.fontString:GetStringWidth())
+    self.tagFrame:SetWidth(self.tagFrame.fontString:GetStringWidth() + 2 * settings.fontSpacing)
+    ]]
     self:RegisterUnitEvent("UNIT_MAXPOWER", self.unit)
     self:RegisterUnitEvent("UNIT_POWER_FREQUENT", self.unit)
     self:Show()
@@ -118,6 +124,26 @@ function createAltPowerFrame(attributes)
     self:UnregisterEvent("UNIT_POWER_FREQUENT")
     self:Hide()
   end
+  --------------------------------------------------------------------------------------------------
+
+  --------------------------------------------------------------------------------------------------
+  altPowerFrame:SetScript("OnEnter", function(self, motion)
+    local _, _, _, _, _, _, _, _, _, powerName, powerTooltip = _G.UnitAlternatePowerInfo("player")
+    if powerName and powerTooltip then
+      --_G.GameTooltip:SetOwner(self, "ANCHOR_NONE")
+      --_G.GameTooltip:SetPoint("TOPLEFT", UIParent, "BOTTOMRIGHT", 0, 0)
+      _G.GameTooltip_SetDefaultAnchor(_G.GameTooltip, _G.WorldFrame)
+      _G.GameTooltip:AddLine(powerName, 1, 1, 1, false)
+      _G.GameTooltip:AddLine(powerTooltip, nil, nil, nil, true)
+      _G.GameTooltip:Show()
+    end
+  end)
+
+  altPowerFrame:SetScript("OnLeave", function(self, motion)
+    _G.GameTooltip:Hide()
+  end)
+
+  altPowerFrame:EnableMouse(true)
   --------------------------------------------------------------------------------------------------
 
   -- Stuff we need to do when PLAYER_LOGIN fires.

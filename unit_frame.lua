@@ -1,21 +1,50 @@
 setfenv(1, NinjaKittyUF)
 
-function createUnitFrame(attributes)
-  local unitFrame
-  if _G.string.match(attributes.unit, "arena") then
-    --unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent,
-      --"SecureUnitButtonTemplate,SecureHandlerAttributeTemplate")
-    -- Mutually exclusive? I can't get the "_onstate-unitexists" snippet to execute when using both
-    -- the SecureHandlerAttributeTemplate and SecureHandlerStateTemplate.
-    --unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent,
-      --"SecureUnitButtonTemplate,SecureHandlerStateTemplate")
-    unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent, "SecureHandlerStateTemplate")
+local function updateBackdrop(unitFrame)
+  if _G.UnitExists(unitFrame.unit) and _G.UnitIsUnit(unitFrame.unit .. "target", "player") then
+    unitFrame:SetBackdropBorderColor(1.0, 1.0, 1.0, 1.0)
   else
-    unitFrame = _G.CreateFrame("Button", attributes.name, _G.UIParent,
-      "SecureUnitButtonTemplate")
-    unitFrame:SetAttribute("*type1", "target")
-    unitFrame:SetAttribute("*type2", "focus")
-    unitFrame:SetAttribute("*type3", "togglemenu")
+    unitFrame:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
+  end
+end
+
+-- TODO: do something more clever, like unregistering all events.
+function enableUnitFrame(unitFrame)
+  unitFrame:SetScript("OnEvent", function(self, event, ...)
+    return self[event](self, ...)
+  end)
+  if not _G.string.match(unitFrame.unit, "arena") then
+    _G.RegisterUnitWatch(unitFrame)
+  end
+  unitFrame:update()
+end
+
+function disableUnitFrame(unitFrame)
+  unitFrame:SetScript("OnEvent", function() end)
+  if _G.UnitWatchRegistered(unitFrame) then
+    _G.UnregisterUnitWatch(unitFrame)
+  end
+  unitFrame:Hide()
+end
+
+function createUnitFrame(attributes)
+  local unitFrame, unitButton
+  if _G.string.match(attributes.unit, "arena") then
+    -- Mutually exclusive? I can't get the "_onstate-unitexists" snippet to execute when using both the
+    -- SecureHandlerAttributeTemplate and SecureHandlerStateTemplate.
+    -- Is it okay to parent a secure frame to an insecure one?
+    --unitFrame = _G.CreateFrame("Frame", attributes.name, _G.UIParent)
+    unitButton = _G.CreateFrame("Button", attributes.name, _G.UIParent,
+      "SecureHandlerStateTemplate,SecureHandlerShowHideTemplate")
+    -- This is true: unitButton:IsProtected().
+    --unitButton:SetAllPoints()
+    unitFrame = unitButton -- TODO: remove.
+  else
+    unitButton = _G.CreateFrame("Button", attributes.name, _G.UIParent, "SecureUnitButtonTemplate")
+    unitButton:SetAttribute("*type1", "target")
+    unitButton:SetAttribute("*type2", "focus")
+    unitButton:SetAttribute("*type3", "togglemenu")
+    unitFrame = unitButton
   end
   unitFrame:SetAttribute("unit", attributes.unit)
 
@@ -86,8 +115,18 @@ function createUnitFrame(attributes)
   -- Stuff we need to do when PLAYER_ENTERING_WORLD fires or when the unit changes.
   if _G.string.match(unitFrame.unit, "arena") then
     function unitFrame:update()
+      updateBackdrop(self)
       for _, bar in _G.ipairs(self.bars) do
         if bar.update then bar:update(self.unit) end
+      end
+    end
+  elseif unitFrame.unit == "target" or unitFrame.unit == "focus" then
+    function unitFrame:update()
+      if _G.UnitExists(self.unit) then
+        updateBackdrop(self)
+        for _, bar in _G.ipairs(self.bars) do
+          if bar.update then bar:update(self.unit) end
+        end
       end
     end
   else
@@ -155,6 +194,25 @@ function createUnitFrame(attributes)
   end
   unitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
+  if unitFrame.unit == "target" or unitFrame.unit == "focus" or
+    _G.string.match(unitFrame.unit, "arena")
+  then
+    function unitFrame:PLAYER_TARGET_CHANGED(cause)
+      if self.unit == "target" then
+        self:update()
+      elseif _G.UnitExists(self.unit) and _G.UnitIsUnit(self.unit, "player") then
+        updateBackdrop(self)
+      end
+    end
+    unitFrame:RegisterEvent("PLAYER_TARGET_CHANGED") -- This is faster than UNIT_TARGET.
+
+    unitFrame:RegisterUnitEvent("UNIT_TARGET", unitFrame.unit)
+    function unitFrame:UNIT_TARGET(unit)
+      updateBackdrop(self)
+    end
+    unitFrame:RegisterUnitEvent("UNIT_TARGET", unitFrame.unit)
+  end
+
   if not _G.string.match(unitFrame.unit, "arena") and unitFrame.unit ~= "player" then
     _G.RegisterUnitWatch(unitFrame)
   end
@@ -164,10 +222,12 @@ function createUnitFrame(attributes)
     -- ...
 
   elseif unitFrame.unit == "target" then
+    --[[
     function unitFrame:PLAYER_TARGET_CHANGED(cause)
       self:update()
     end
     unitFrame:RegisterEvent("PLAYER_TARGET_CHANGED") -- This is faster than UNIT_TARGET.
+    ]]
 
   elseif unitFrame.unit == "focus" then
     function unitFrame:PLAYER_FOCUS_CHANGED(cause)
@@ -219,21 +279,30 @@ function createUnitFrame(attributes)
     end
     unitFrame:RegisterEvent("ARENA_PREP_OPPONENT_SPECIALIZATIONS")
     function unitFrame:ARENA_OPPONENT_UPDATE(unit, eventType)
-      if _G.UnitIsUnit(unit, self.unit) then
-        _G.print(unit, eventType)
-      end
-      if _G.UnitExists(unit) then
-        self:update()
-      end
-      if not _G.InCombatLockdown() then
-        if _G.UnitIsUnit(unit, self.unit) then
-          if eventType == "cleared" then
-            self:Hide()
-          end
+      if unit ~= self.unit then return end
+      --_G.print("ARENA_OPPONENT_UPDATE", unit, eventType)
+      -- Calling UnitIsUnit() probably doesn't always make a whole lot of sense as UnitExists(unit) might be false.
+      if eventType == "cleared" then
+        -- When exacly does this happen? Seems to be at the start of an arena match for arena1 to arena5.
+        local oppNumber = _G.tonumber(_G.string.sub(unit, 6)) -- Example value for unit: "arena1".
+        if not _G.UnitExists(unit) and not _G.GetArenaOpponentSpec(oppNumber) then
+          self:Hide()
         end
+      elseif eventType == "destroyed" then
+        -- Typically, _G.UnitExists(unit) seems to be true here.
+        -- TODO: do something to indicate the unit is gone, but don't hide the frame.
+        --if not _G.InCombatLockdown() then
+          self:Hide() -- This will be trobule if InCombatLockdown(). TODO: use a secure button frame for clicks and an
+                      -- insecure frame for everything else.
+        --end
+      elseif _G.UnitExists(unit) then
+        self:update()
+      elseif eventType == "unseen" then
+        _G.assert(not _G.UnitExists(unit))
       end
     end
-    unitFrame:RegisterUnitEvent("ARENA_OPPONENT_UPDATE", unitFrame.unit)
+    -- I think RegisterUnitEvent() does not work for ARENA_OPPONENT_UPDATE.
+    unitFrame:RegisterEvent("ARENA_OPPONENT_UPDATE")
 
   elseif _G.string.match(unitFrame.unit, "party") then
     function unitFrame:GROUP_ROSTER_UPDATE()
@@ -275,15 +344,22 @@ function createUnitFrame(attributes)
   end
   --------------------------------------------------------------------------------------------------
 
+  ----[[
   if not unitFrame:HasScript("OnShow") then
     unitFrame:SetScript("OnShow", function(self) end)
   end
   unitFrame:HookScript("OnShow", function(self)
     self:update()
   end)
+  --]]
+  --[[
+  unitFrame:SetScript("OnShow", function(self)
+    self:update()
+  end)
+  ]]
 
   unitFrame:SetScript("OnEnter", function(self, motion)
-    self:SetBackdropBorderColor(1.0, 1.0, 1.0, 1.0)
+    --self:SetBackdropBorderColor(1.0, 1.0, 1.0, 1.0)
     -- See "http://www.wowwiki.com/Talk:UIOBJECT_GameTooltip".
     _G.GameTooltip_SetDefaultAnchor(_G.GameTooltip, _G.WorldFrame)
     _G.GameTooltip:SetUnit(attributes.unit)
@@ -294,11 +370,15 @@ function createUnitFrame(attributes)
   end)
 
   unitFrame:SetScript("OnLeave", function(self, motion)
-    self:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
+    --self:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
     _G.GameTooltip:FadeOut()
   end)
+
+  if attributes.disabled then
+    disableUnitFrame(unitFrame)
+  end
 
   return unitFrame
 end
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sw=2 et

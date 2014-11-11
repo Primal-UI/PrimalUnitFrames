@@ -16,8 +16,8 @@ settings = {
     unknown = "Unknown",
   },
   colors = {
-    background = { r = 0, g = 0, b = 0, a = 0.5, colorStr = "80000000" },
-    casting = { r = 0.85, g = 0.25, b = 0.25, a = 0.75, colorStr = "bfd94040" },
+    background = { r = 0, g = 0, b = 0, a = .5, colorStr = "80000000" },
+    casting = { r = .85, g = .25, b = .25, a = .75, colorStr = "bfd94040" },
     castingNotInterruptible = { r = 0.75, g = 0.25, b = 0.85, a = 0.75, colorStr = "bfbf40d9" },
     --castingNotInterruptible = { r = 0.5, g = 0.0, b = 0.75, a = 0.75, colorStr = "bf8000bf" },
     dead = { r = 0.75, g = 0.75, b = 0.75, a = 0.25, colorStr = "40bfbfbf" },
@@ -113,12 +113,21 @@ _G.table.insert(frameAttributes, {
   unit = "player",
   create = createUnitFrame,
 
+  width = settings.defaults.width,
+
+  --[[
   point         = "BOTTOMLEFT",
   relativeTo    = "UIParent",
   relativePoint = "BOTTOMLEFT",
   xOffset       = 467,
   yOffset       = 348,
-  width         = settings.defaults.width,
+  ]]
+
+  point         = "TOPLEFT",
+  relativeTo    = "UIParent",
+  relativePoint = "LEFT",
+  xOffset       = 467,
+  yOffset       = -96,
 
   bars = {
     {
@@ -127,7 +136,7 @@ _G.table.insert(frameAttributes, {
     },
     {
       create = createHealthBar,
-      height = 21,
+      height = 20,
       mirror = true,
     },
   },
@@ -152,7 +161,7 @@ _G.table.insert(frameAttributes, {
     },
     {
       create = createHealthBar,
-      height = 21,
+      height = 20,
       mirror = true,
     },
   },
@@ -164,18 +173,19 @@ for i = 1, 4 do
     unit = "party" .. i,
     create = createUnitFrame,
 
+    width         = settings.defaults.width,
+
     point         = "TOP",
     relativeTo    = (i == 1) and "NKPlayerFrame" or ("NKParty" .. (i - 1) .. "Frame"),
     relativePoint = "BOTTOM",
     xOffset       = 0,
-    -- 2 + 28 + 8 = 38. 1 + 21 + 1 + 2 + 1 + 21 + 1 + 2 + 28 + 8 = 86
-    yOffset       = -38--[[ - 86 * (i - 1)]],
-    width         = settings.defaults.width,
+    --yOffset       = -38,
+    yOffset       = -60,
 
     bars = {
       {
         create = createHeaderBar,
-        height = 21,
+        height = 20,
         mirror = true,
       },
       {
@@ -184,7 +194,7 @@ for i = 1, 4 do
       },
       {
         create = createHealthBar,
-        height = 8,
+        height = 6,
         mirror = true,
       },
     },
@@ -200,7 +210,7 @@ _G.table.insert(frameAttributes, {
   relativePoint = "BOTTOM",
   xOffset       = 0,
   yOffset       = 328,
-  width         = 170,
+  width         = 168,
   height        = 4,
 })
 
@@ -214,7 +224,7 @@ _G.table.insert(frameAttributes, {
   relativePoint = "BOTTOM",
   xOffset       = 0,
   yOffset       = 368,
-  width         = 170,
+  width         = 168,
   height        = 4,
 })
 
@@ -223,12 +233,21 @@ _G.table.insert(frameAttributes, {
   unit = "target",
   create = createUnitFrame,
 
+  width = settings.defaults.width,
+
+  --[[
   point         = "BOTTOMRIGHT",
   relativeTo    = "UIParent",
   relativePoint = "BOTTOMRIGHT",
   xOffset       = -467,
   yOffset       = 348,
-  width         = settings.defaults.width,
+  ]]
+
+  point         = "BOTTOMLEFT",
+  relativeTo    = "NKPlayerFrame",
+  relativePoint = "BOTTOMRIGHT",
+  xOffset       = 1920 - 2 * 467 - 2 * settings.defaults.width,
+  yOffset       = 0,
 
   bars = {
     {
@@ -237,7 +256,7 @@ _G.table.insert(frameAttributes, {
 
       },
       create = createHeaderBar,
-      height = 21,
+      height = 20,
       tags = {
         {
           proportion = 1,
@@ -258,7 +277,7 @@ _G.table.insert(frameAttributes, {
     },
     {
       create = createHealthBar,
-      height = 21,
+      height = 20,
     },
   },
 })
@@ -272,13 +291,13 @@ _G.table.insert(frameAttributes, {
   relativeTo    = "NKTargetFrame",
   relativePoint = "BOTTOM",
   xOffset       = 0,
-  yOffset       = -38, -- 2 + 28 + 8 = 38
+  yOffset       = -60, -- 2 + 28 + 8 + 22 = 60
   width         = settings.defaults.width,
 
   bars = {
     {
       create = createHeaderBar,
-      height = 21,
+      height = 20,
     },
     {
       create = createPowerBar,
@@ -287,8 +306,30 @@ _G.table.insert(frameAttributes, {
     },
     {
       create = createHealthBar,
-      height = 8,
+      height = 6,
     },
+  },
+})
+
+_G.table.insert(frameAttributes, {
+  name = "NKFocusCastFrame",
+  unit = "focus",
+  create = createCastFrame,
+
+  point         = "BOTTOMLEFT",
+  relativeTo    = "NKFocusFrame",
+  relativePoint = "TOPLEFT",
+  xOffset       = -2,
+  yOffset       = 2,
+
+  width         = settings.defaults.width + 2,
+  height        = 22,
+
+  icon = {
+    point         = "BOTTOMRIGHT",
+    relativePoint = "BOTTOMLEFT",
+    xOffset       = 1,
+    yOffset       = 0,
   },
 })
 
@@ -301,9 +342,11 @@ _G.table.insert(frameAttributes, {
   relativeTo    = "UIParent",
   relativePoint = "BOTTOM",
   xOffset       = 0,
-  yOffset       = 368--[[262]],
-  width         = 170--[[236]],
-  height        = 6,
+  --yOffset       = 368,
+  yOffset       = 294,
+  --width         = 168,
+  width         = 236,
+  height        = 4,
 })
 
 _G.table.insert(frameAttributes, {
@@ -317,7 +360,8 @@ _G.table.insert(frameAttributes, {
   xOffset       = 112, -- (193 - 1 + 32) / 2 = 112
   yOffset       = -34,
   width         = 193,
-  height        = 23,
+
+  height        = 22,
 
   icon = {
     point         = "BOTTOMRIGHT",
@@ -328,43 +372,51 @@ _G.table.insert(frameAttributes, {
 })
 
 _G.table.insert(frameAttributes, {
-  name = "NKFocusCastFrame",
-  unit = "focus",
-  create = createCastFrame,
+  name = "NKArena1Frame",
+  unit = "arena1",
+  create = createUnitFrame,
 
-  point         = "TOPLEFT",
-  relativeTo    = "NKTargetCastFrame",
-  relativePoint = "TOPRIGHT",
-  xOffset       = 33,
-  yOffset       = 0,
-  width         = 193,
-  height        = 23,
+  point         = "TOP",
+  relativeTo    = "NKFocusFrame",
+  relativePoint = "BOTTOM",
+  xOffset       = 0,
+  yOffset       = -60,
+  width         = settings.defaults.width,
 
-  icon = {
-    point         = "BOTTOMRIGHT",
-    relativePoint = "BOTTOMLEFT",
-    xOffset       = 1,
-    yOffset       = 0,
+  bars = {
+    {
+      create = createHeaderBar,
+      height = 20,
+    },
+    {
+      create = createPowerBar,
+      height = 2,
+      mirror = true,
+    },
+    {
+      create = createHealthBar,
+      height = 6,
+    },
   },
 })
 
-for i = 1, 3 do
+for i = 2, 3 do
   _G.table.insert(frameAttributes, {
     name = "NKArena" .. i .. "Frame",
     unit = "arena" .. i,
     create = createUnitFrame,
 
     point         = "TOP",
-    relativeTo    = (i == 1) and "NKFocusFrame" or ("NKArena" .. (i - 1) .. "Frame"),
+    relativeTo    = "NKArena" .. (i - 1) .. "Frame",
     relativePoint = "BOTTOM",
     xOffset       = 0,
-    yOffset       = -38--[[ - (i - 1) * 69]], -- 2 + 28 + 8 + (i- 1) * 1 + 21 + 1 + 2 + 1 + 4 + 1 + 2 + 28 + 8
+    yOffset       = -60,
     width         = settings.defaults.width,
 
     bars = {
       {
         create = createHeaderBar,
-        height = 21,
+        height = 20,
       },
       {
         create = createPowerBar,
@@ -373,10 +425,56 @@ for i = 1, 3 do
       },
       {
         create = createHealthBar,
-        height = 8,
+        height = 6,
       },
     },
   })
 end
+
+for i = 1, 3 do
+  _G.table.insert(frameAttributes, {
+    name = "NKArena" .. i .. "CastFrame",
+    unit = "arena" ..i ,
+    create = createCastFrame,
+
+    point         = "BOTTOMLEFT",
+    relativeTo    = "NKArena" .. i .. "Frame",
+    relativePoint = "TOPLEFT",
+    xOffset       = -2,
+    yOffset       = 2,
+
+    width         = settings.defaults.width + 2,
+    height        = 22,
+
+    icon = {
+      point         = "BOTTOMRIGHT",
+      relativePoint = "BOTTOMLEFT",
+      xOffset       = 1,
+      yOffset       = 0,
+    },
+  })
+end
+
+_G.table.insert(frameAttributes, {
+  name = "NKAltTargetFrame",
+  unit = "target",
+  create = createUnitFrame,
+
+  point         = "BOTTOMLEFT",
+  relativeTo    = "NKArena1Frame",
+  relativePoint = "TOPLEFT",
+  xOffset       = 0,
+  yOffset       = 32, -- 2 + 22 + 8
+  width         = settings.defaults.width,
+
+  bars = {
+    {
+      create = createHealthBar,
+      height = 20,
+    },
+  },
+
+  disabled = true,
+})
 
 -- vim: tw=100 sw=2 et

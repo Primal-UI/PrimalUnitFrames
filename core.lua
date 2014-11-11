@@ -41,8 +41,75 @@ end)
 function handlerFrame:ADDON_LOADED(name)
   self:UnregisterEvent("ADDON_LOADED")
 
+  local function hideBlizzardUnitFrame(frame)
+    _G.assert(not _G.InCombatLockdown())
+    frame:UnregisterAllEvents()
+    frame.healthbar:UnregisterAllEvents()
+    frame.manabar:UnregisterAllEvents()
+    if frame.spellbar then frame.spellbar:UnregisterAllEvents() end
+    frame:HookScript("OnUpdate", function() _G.error() end)
+    frame:HookScript("OnEvent", function() _G.error() end)
+    frame:Hide()
+  end
+
+  hideBlizzardUnitFrame(_G.PlayerFrame)
+  hideBlizzardUnitFrame(_G.TargetFrame)
+  hideBlizzardUnitFrame(_G.TargetFrameToT)
+  hideBlizzardUnitFrame(_G.FocusFrame)
+  hideBlizzardUnitFrame(_G.FocusFrameToT)
+  _G.ComboFrame:UnregisterAllEvents(); _G.ComboFrame:Hide()
+  _G.BuffFrame:UnregisterAllEvents(); _G.BuffFrame:Hide()
+  _G.ConsolidatedBuffs:Hide()
+  _G.TemporaryEnchantFrame:Hide()
+  _G.CastingBarFrame:UnregisterAllEvents()
+  -- This also seems to prevent _G.BuffTiimer1 from being shown. TODO: do we need to replace it?
+  _G.PlayerPowerBarAlt:UnregisterAllEvents()
+  _G.PlayerPowerBarAlt:HookScript("OnShow", function(self)
+    self:Hide()
+  end)
+  _G.PlayerPowerBarAlt:Hide()
+  _G.UIParent:UnregisterEvent("GROUP_ROSTER_UPDATE") -- ShadowedUnitFrames does this.
+  for i = 1, _G.MAX_PARTY_MEMBERS do
+    _G["PartyMemberFrame" .. i]:UnregisterAllEvents()
+    _G["PartyMemberFrame" .. i]:Hide()
+    _G["PartyMemberFrame" .. i]:HookScript("OnShow", function(self)
+      if not _G.InCombatLockdown() then
+        self:Hide()
+      end
+    end)
+  end
+
   for _, v in _G.ipairs(frameAttributes) do
     v:create()
+  end
+
+  ----------------------------------------------------------------------------------------------------------------------
+  -- Define special behaviour for some of the unit frames we just created.
+  ----------------------------------------------------------------------------------------------------------------------
+
+  do -- Hide the party frames when in a raid group of at least 6 members.
+    local frame = _G.CreateFrame("Frame", nil, _G.UIParent, "SecureHandlerStateTemplate")
+    for i = 1, 4 do
+      frame:SetFrameRef("NKParty" .. i .. "Frame", _G["NKParty" .. i .. "Frame"])
+    end
+    _G.RegisterStateDriver(frame, "raid6exists", "[@raid6,exists]exists;noexists")
+    frame:SetAttribute("_onstate-raid6exists", [[ -- arguments: self, stateid, newstate
+      if newstate == "exists" then
+        for i = 1, 4 do
+          UnregisterUnitWatch(self:GetFrameRef("NKParty" .. i .. "Frame"))
+          self:GetFrameRef("NKParty" .. i .. "Frame"):Hide()
+        end
+      elseif newstate == "noexists" then
+        for i = 1, 4 do
+          RegisterUnitWatch(self:GetFrameRef("NKParty" .. i .. "Frame"))
+          self:GetFrameRef("NKParty" .. i .. "Frame"):Show()
+        end
+      end
+    ]])
+    frame:Execute([[
+      stateid, newstate = "raid6exists", UnitExists("raid6") and "exists" or "noexists"
+      self:RunAttribute("_onstate-raid6exists")
+    ]])
   end
 
   self.ADDON_LOADED = nil
@@ -50,4 +117,4 @@ end
 
 handlerFrame:RegisterEvent("ADDON_LOADED")
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sw=2 et

@@ -1,5 +1,17 @@
 setfenv(1, NinjaKittyUF)
 
+function enableCastFrame(frame)
+  frame:SetScript("OnEvent", function(self, event, ...)
+    return self[event](self, ...)
+  end)
+  frame:update()
+end
+
+function disableCastFrame(frame)
+  frame:SetScript("OnEvent", function() end)
+  frame:Hide()
+end
+
 function createCastFrame(attributes)
   local unit = attributes.unit
 
@@ -311,6 +323,11 @@ function createCastFrame(attributes)
       self:update()
     end
     castFrame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+  elseif _G.string.match(castFrame.unit, "arena") then
+    function castFrame:ARENA_OPPONENT_UPDATE(unit, eventType)
+      self:update()
+    end
+    castFrame:RegisterUnitEvent("ARENA_OPPONENT_UPDATE", castFrame.unit)
   else
     _G.assert(nil)
   end
