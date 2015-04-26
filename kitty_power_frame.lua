@@ -96,6 +96,8 @@ function createKittyPowerFrame(attributes)
     if energyMax and rageMax and energyBarMax and rageBarMax then
       if energyMax ~= energyBarMax or rageMax ~= rageBarMax then
         self.backgroundStatusBar:SetMinMaxValues(0, _G.math.max(energyMax, rageMax))
+        self.energyStatusBar:SetMinMaxValues(0, _G.math.max(energyMax, rageMax))
+        self.rageStatusBar:SetMinMaxValues(0, _G.math.max(energyMax, rageMax))
         self:UNIT_POWER_FREQUENT(unit)
       end
     end
@@ -195,4 +197,4 @@ function createKittyPowerFrame(attributes)
   return kittyPowerFrame
 end
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sw=2 et

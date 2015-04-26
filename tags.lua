@@ -617,7 +617,9 @@ do
     local numScores = _G.GetNumBattlefieldScores() -- Returns 0 if not in a battleground.
     for i = 1, numScores do
       local name, _, _, _, _, _, _, _, _, _, _, _, _, _, _, talentSpec = _G.GetBattlefieldScore(i)
-      battlegroundSpecs[name] = talentSpec
+      if name then
+        battlegroundSpecs[name] = talentSpec
+      end
     end
     for unit, tag in _G.pairs(SpecTag.tags) do
       local text = getSpecText(tag)

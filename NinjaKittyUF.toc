@@ -1,4 +1,4 @@
-## Interface: 50400
+## Interface: 60100
 ## Title: NinjaKittyUF
 ## Notes: Only a player and vehicle frame for my UI.
 ## Dependencies: NinjaKittyCore

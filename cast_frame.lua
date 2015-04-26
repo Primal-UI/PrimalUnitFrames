@@ -15,7 +15,7 @@ end
 function createCastFrame(attributes)
   local unit = attributes.unit
 
-  local castFrame = _G.CreateFrame("Frame", attributes.name, _G.UIParent)
+  local castFrame = _G.CreateFrame("Frame", attributes.name, attributes.parent and _G[attributes.parent] or _G.UIParent)
   castFrame:SetFrameLevel(10)
   castFrame:SetPoint(attributes.point, _G[attributes.relativeTo], attributes.relativePoint,
     attributes.xOffset, attributes.yOffset)
@@ -29,8 +29,8 @@ function createCastFrame(attributes)
 
   if attributes.icon then
     castFrame.icon = _G.CreateFrame("Frame", nil, castFrame)
-    castFrame.icon:SetPoint(attributes.icon.point, castFrame, attributes.icon.relativePoint,
-      attributes.icon.xOffset, attributes.icon.yOffset)
+    castFrame.icon:SetPoint(attributes.icon.point, castFrame, attributes.icon.relativePoint, attributes.icon.xOffset,
+      attributes.icon.yOffset)
     castFrame.icon:SetHeight(32)
     castFrame.icon:SetWidth(32)
     castFrame.icon:SetBackdrop(settings.unitFrameBackdrop)
@@ -207,6 +207,8 @@ function createCastFrame(attributes)
     if self:IsShown() then
       self.castStatusBar:SetMinMaxValues(0, self.maxValue)
       self.castStatusBar:SetValue(self.value)
+      self.backgroundStatusBar:SetMinMaxValues(0, self.maxValue)
+      self.backgroundStatusBar:SetValue(self.maxValue)
     end
   end
 
@@ -328,11 +330,16 @@ function createCastFrame(attributes)
       self:update()
     end
     castFrame:RegisterUnitEvent("ARENA_OPPONENT_UPDATE", castFrame.unit)
+  elseif _G.string.match(castFrame.unit, "party") then
+    function castFrame:GROUP_ROSTER_UPDATE()
+      self:update()
+    end
+    castFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
   else
-    _G.assert(nil)
+    _G.error()
   end
 
   return castFrame
 end
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sw=2 et

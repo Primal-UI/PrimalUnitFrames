@@ -127,7 +127,8 @@ _G.table.insert(frameAttributes, {
   relativeTo    = "UIParent",
   relativePoint = "LEFT",
   xOffset       = 467,
-  yOffset       = -96,
+  --yOffset       = -96,
+  yOffset       = -32,
 
   bars = {
     {
@@ -200,6 +201,32 @@ for i = 1, 4 do
     },
   })
 end
+
+--[[
+_G.table.insert(frameAttributes, {
+  name = "NKParty1CastFrame",
+  unit = "party1",
+  create = createCastFrame,
+
+  parent = "NKParty1Frame",
+
+  point         = "BOTTOMLEFT",
+  relativeTo    = "NKParty1Frame",
+  relativePoint = "TOPLEFT",
+  xOffset       = -2,
+  yOffset       = 2,
+
+  width         = settings.defaults.width + 2,
+  height        = 22,
+
+  icon = {
+    point         = "BOTTOMLEFT",
+    relativePoint = "BOTTOMRIGHT",
+    xOffset       = -1,
+    yOffset       = 0,
+  },
+})
+]]
 
 _G.table.insert(frameAttributes, {
   name = "NKKittyPowerFrame",
@@ -437,6 +464,8 @@ for i = 1, 3 do
     unit = "arena" ..i ,
     create = createCastFrame,
 
+    parent = "NKArena" .. i .. "Frame",
+
     point         = "BOTTOMLEFT",
     relativeTo    = "NKArena" .. i .. "Frame",
     relativePoint = "TOPLEFT",
@@ -477,4 +506,4 @@ _G.table.insert(frameAttributes, {
   disabled = true,
 })
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sw=2 et

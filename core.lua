@@ -1,3 +1,5 @@
+local addonName, addon = ...
+
 --[[
 I think UNIT_POWER_BAR_SHOW and UNIT_POWER_BAR_HIDE relate to the UnitPowerBarAlt frame.
 See: http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitPowerBarAlt.lua
@@ -5,8 +7,11 @@ See: http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitPowerBarAlt.lu
 http://wowpedia.org/COMBAT_LOG_EVENT.  Is destGUID etc. actually set for a SPELL_CAST_START event?
 ]]
 
-NinjaKittyUF = LibStub("AceAddon-3.0"):NewAddon("NinjaKittyUF", "AceConsole-3.0")
-NinjaKittyUF._G = _G
+addon._G = _G
+NinjaKittyUF = addon
+
+--NinjaKittyUF = LibStub("AceAddon-3.0"):NewAddon("NinjaKittyUF", "AceConsole-3.0")
+--NinjaKittyUF._G = _G
 
 setfenv(1, NinjaKittyUF)
 
@@ -87,6 +92,17 @@ function handlerFrame:ADDON_LOADED(name)
   -- Define special behaviour for some of the unit frames we just created.
   ----------------------------------------------------------------------------------------------------------------------
 
+  --[[
+  _G.CompactRaidFrameContainer:HookScript("OnShow", function(self)
+    if _G.InCombatLockdown() then return end
+  end)
+
+  _G.CompactRaidFrameContainer:HookScript("OnHide", function(self)
+    if _G.InCombatLockdown() then return end
+  end)
+  ]]
+
+  --[=[
   do -- Hide the party frames when in a raid group of at least 6 members.
     local frame = _G.CreateFrame("Frame", nil, _G.UIParent, "SecureHandlerStateTemplate")
     for i = 1, 4 do
@@ -111,10 +127,46 @@ function handlerFrame:ADDON_LOADED(name)
       self:RunAttribute("_onstate-raid6exists")
     ]])
   end
+  --]=]
+
+  do
+    -- I think we can't wrap script handlers of a frame that isn't explicitly protected (i.e.
+    -- CompactRaidFrameContainer), but creating an explicitly protected child frame and wrapping its handlers works.
+    local proxyFrame = _G.CreateFrame("Frame", nil, _G.CompactRaidFrameContainer, "SecureHandlerBaseTemplate")
+
+    local header = _G.CreateFrame("Frame", nil, _G.UIParent, "SecureHandlerBaseTemplate")
+
+    for i = 1, 4 do
+      header:SetFrameRef("NKParty" .. i .. "Frame", _G["NKParty" .. i .. "Frame"])
+    end
+
+    header:Execute([[
+      partyFrames = table.new()
+      for i = 1, 4 do
+        table.insert(partyFrames, self:GetFrameRef("NKParty" .. i .. "Frame"))
+      end
+    ]])
+
+    header:WrapScript(proxyFrame, "OnShow", [[
+      print("foo2")
+      for i = 1, 4 do
+        UnregisterUnitWatch(partyFrames[i])
+        partyFrames[i]:Hide()
+      end
+    ]])
+
+    header:WrapScript(proxyFrame, "OnHide", [[
+      print("bar2")
+      for i = 1, 4 do
+        RegisterUnitWatch(partyFrames[i])
+        partyFrames[i]:Show()
+      end
+    ]])
+  end
 
   self.ADDON_LOADED = nil
 end
 
 handlerFrame:RegisterEvent("ADDON_LOADED")
 
--- vim: tw=120 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et

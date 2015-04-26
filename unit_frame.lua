@@ -30,9 +30,8 @@ end
 function createUnitFrame(attributes)
   local unitFrame, unitButton
   if _G.string.match(attributes.unit, "arena") then
-    -- Mutually exclusive? I can't get the "_onstate-unitexists" snippet to execute when using both the
-    -- SecureHandlerAttributeTemplate and SecureHandlerStateTemplate.
-    -- Is it okay to parent a secure frame to an insecure one?
+    -- Are SecureHandlerAttributeTemplate and SecureHandlerStateTemplate mutually exclusive? I can't get the
+    -- "_onstate-unitexists" snippet to execute when using both. Is it okay to parent a secure frame to an insecure one?
     --unitFrame = _G.CreateFrame("Frame", attributes.name, _G.UIParent)
     unitButton = _G.CreateFrame("Button", attributes.name, _G.UIParent,
       "SecureHandlerStateTemplate,SecureHandlerShowHideTemplate")
@@ -120,6 +119,7 @@ function createUnitFrame(attributes)
         if bar.update then bar:update(self.unit) end
       end
     end
+  --[[
   elseif unitFrame.unit == "target" or unitFrame.unit == "focus" then
     function unitFrame:update()
       if _G.UnitExists(self.unit) then
@@ -129,15 +129,24 @@ function createUnitFrame(attributes)
         end
       end
     end
+  ]]
   else
     function unitFrame:update()
       if _G.UnitExists(self.unit) then
+        updateBackdrop(self)
         for _, bar in _G.ipairs(self.bars) do
           if bar.update then bar:update(self.unit) end
         end
       end
     end
   end
+
+  -- TODO: required?
+  function unitFrame:UNIT_LEVEL(unit)
+    _G.assert(_G.UnitIsUnit(unit, self.unit))
+    self:update()
+  end
+  unitFrame:RegisterUnitEvent("UNIT_LEVEL", unitFrame.unit)
 
   function unitFrame:UNIT_NAME_UPDATE(unit)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
@@ -194,9 +203,7 @@ function createUnitFrame(attributes)
   end
   unitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
-  if unitFrame.unit == "target" or unitFrame.unit == "focus" or
-    _G.string.match(unitFrame.unit, "arena")
-  then
+  --if unitFrame.unit == "target" or unitFrame.unit == "focus" or _G.string.match(unitFrame.unit, "arena") then
     function unitFrame:PLAYER_TARGET_CHANGED(cause)
       if self.unit == "target" then
         self:update()
@@ -211,7 +218,7 @@ function createUnitFrame(attributes)
       updateBackdrop(self)
     end
     unitFrame:RegisterUnitEvent("UNIT_TARGET", unitFrame.unit)
-  end
+  --end
 
   if not _G.string.match(unitFrame.unit, "arena") and unitFrame.unit ~= "player" then
     _G.RegisterUnitWatch(unitFrame)
@@ -291,10 +298,12 @@ function createUnitFrame(attributes)
       elseif eventType == "destroyed" then
         -- Typically, _G.UnitExists(unit) seems to be true here.
         -- TODO: do something to indicate the unit is gone, but don't hide the frame.
-        --if not _G.InCombatLockdown() then
+        --[[
+        if not _G.InCombatLockdown() then
           self:Hide() -- This will be trobule if InCombatLockdown(). TODO: use a secure button frame for clicks and an
                       -- insecure frame for everything else.
-        --end
+        end
+        ]]
       elseif _G.UnitExists(unit) then
         self:update()
       elseif eventType == "unseen" then
