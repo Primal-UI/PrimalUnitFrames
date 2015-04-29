@@ -1,4 +1,6 @@
-setfenv(1, NinjaKittyUF)
+local addonName, addon = ...
+
+setfenv(1, addon)
 
 function createAltPowerFrame(attributes)
   local altPowerFrame = _G.CreateFrame("Frame", attributes.name, _G.UIParent)
@@ -205,4 +207,4 @@ pPowerBarAlt:SetScript("OnLeave", function(self, motion)
 end)
 --]]
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et

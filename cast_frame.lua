@@ -1,4 +1,6 @@
-setfenv(1, NinjaKittyUF)
+local addonName, addon = ...
+
+setfenv(1, addon)
 
 function enableCastFrame(frame)
   frame:SetScript("OnEvent", function(self, event, ...)
@@ -342,4 +344,4 @@ function createCastFrame(attributes)
   return castFrame
 end
 
--- vim: tw=120 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et

@@ -4,7 +4,7 @@ local addonName, addon = ...
 I think UNIT_POWER_BAR_SHOW and UNIT_POWER_BAR_HIDE relate to the UnitPowerBarAlt frame.
 See: http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitPowerBarAlt.lua
 
-http://wowpedia.org/COMBAT_LOG_EVENT.  Is destGUID etc. actually set for a SPELL_CAST_START event?
+http://wowpedia.org/COMBAT_LOG_EVENT. Is destGUID etc. actually set for a SPELL_CAST_START event?
 ]]
 
 addon._G = _G
@@ -91,16 +91,6 @@ function handlerFrame:ADDON_LOADED(name)
   ----------------------------------------------------------------------------------------------------------------------
   -- Define special behaviour for some of the unit frames we just created.
   ----------------------------------------------------------------------------------------------------------------------
-
-  --[[
-  _G.CompactRaidFrameContainer:HookScript("OnShow", function(self)
-    if _G.InCombatLockdown() then return end
-  end)
-
-  _G.CompactRaidFrameContainer:HookScript("OnHide", function(self)
-    if _G.InCombatLockdown() then return end
-  end)
-  ]]
 
   --[=[
   do -- Hide the party frames when in a raid group of at least 6 members.

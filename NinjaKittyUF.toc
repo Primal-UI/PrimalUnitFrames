@@ -1,9 +1,9 @@
 ## Interface: 60100
-## Title: NinjaKittyUF
-## Notes: Only a player and vehicle frame for my UI.
+## Title: PrimalUnitFrames
+## Notes: Unit Frames for Primal UI.
 ## Dependencies: NinjaKittyCore
 ## OptionalDeps:
-## Author: meribold (Lukas Waymann)
+## Author: meribold
 ## Version: 0.1
 
 embeds.xml

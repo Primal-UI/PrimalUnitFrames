@@ -1,4 +1,6 @@
-setfenv(1, NinjaKittyUF)
+local addonName, addon = ...
+
+setfenv(1, addon)
 
 function createPowerBar(unit, mirror)
   local powerBar = _G.CreateFrame("Frame")
@@ -209,4 +211,4 @@ function createManaBar(unit, mirror)
   return manaBar
 end
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et

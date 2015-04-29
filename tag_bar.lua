@@ -1,4 +1,6 @@
-setfenv(1, NinjaKittyUF)
+local addonName, addon = ...
+
+setfenv(1, addon)
 
 -- Prototype.
 TagBar = {
@@ -295,4 +297,4 @@ function createHeaderBar(unit, mirror)
   return headerBar
 end
 
--- vim: tw=100 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et

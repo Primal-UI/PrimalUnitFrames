@@ -1,4 +1,6 @@
-setfenv(1, NinjaKittyUF)
+local addonName, addon = ...
+
+setfenv(1, addon)
 
 -- Prototype.
 HealthBar = {
@@ -12,8 +14,8 @@ local healthTag = function(unit, healthMax, health, totalAbsorbs)
 
   local colorStr
   if --[[_G.UnitIsPlayer(unit)]] true then
-    -- I don't like the blue UnitSelectionColor() returns when the unit is a player not active for
-    -- PvP in some places. It's also used for NPCs sometimes.
+    -- I don't like the blue UnitSelectionColor() returns when the unit is a player not active for PvP in some places.
+    -- It's also used for NPCs sometimes.
     if _G.UnitIsEnemy("player", unit) then
       if _G.UnitCanAttack(unit, "player") then -- He can attack us. Red.
         colorStr = "ffff0000"
@@ -42,13 +44,6 @@ local healthTag = function(unit, healthMax, health, totalAbsorbs)
       healthStr = _G.string.format("%dk", _G.math.floor((health + 500) / 1000))
     end
 
-    --[[
-    local healthPercent = _G.math.floor(100 * health / healthMax + .5)
-    if healthPercent <= 50 then
-      healthStr = healthStr .. " (" .. healthPercent .. "%)"
-    end
-    ]]
-
     if totalAbsorbs / 1000 >= 10000 then
       healthStr = healthStr .. " + " .. _G.string.format("%dm", _G.math.floor((totalAbsorbs +
         500000) / 1000000))
@@ -67,118 +62,103 @@ local percentHealthTag = function(unit, healthMax, health, totalAbsorbs)
   end
 
   if _G.UnitIsDeadOrGhost(unit) then
-    return ""
+    return
   end
 
-  --[=[
-  local colorStr
-  if --[[_G.UnitIsPlayer(unit)]] true then
-    -- I don't like the blue UnitSelectionColor() returns when the unit is a player not active for
-    -- PvP in some places. It's also used for NPCs sometimes.
-    if _G.UnitIsEnemy("player", unit) then
-      if _G.UnitCanAttack(unit, "player") then -- He can attack us. Red.
-        colorStr = "ffff0000"
-      else -- He can't attack us. Yellow.
-        colorStr = "ffffff00"
-      end
-    else -- He's our friend. Green.
-      colorStr = "ff00ff00"
-    end
-  else
-    local red, green, blue, alpha = _G.UnitSelectionColor(unit)
-    -- http://wowprogramming.com/docs/api_types#colorString
-    colorStr = _G.string.format("%02x%02x%02x%02x", alpha * 255, red * 255, green * 255, blue *
-      255)
-  end
-  ]=]
-  local colorStr = "ff000000"
-
+  local color = "ff000000"
   local healthPercent = _G.math.floor(100 * health / healthMax + .5)
-  --if healthPercent <= 50 then
-    local healthStr = healthPercent .. '%'
-  --end
 
-  return "|c" .. colorStr .. healthStr .. "|r"
+  return "|c" .. color .. healthPercent .. "%|r"
 end
 
 function createHealthBar(unit, mirror)
   local healthBar = _G.CreateFrame("Frame")
-  local frameLevel = healthBar:GetFrameLevel()
 
-  healthBar.healthStatusBar = _G.CreateFrame("StatusBar", nil, healthBar)
+  healthBar.health = healthBar:CreateTexture()
   do
-    local statusBar = healthBar.healthStatusBar
+    local texture = healthBar.health
     local color = settings.colors.background
-    statusBar:SetAllPoints()
+    texture:SetTexture(color.r, color.g, color.b, color.a)
+    texture:SetPoint("TOP")
+    texture:SetPoint("BOTTOM")
     if mirror then
-      statusBar:SetReverseFill(true)
+      texture:SetPoint("RIGHT", healthBar)
+    else
+      texture:SetPoint("LEFT", healthBar)
     end
-    statusBar:SetStatusBarTexture(settings.barTexture)
-    statusBar:SetMinMaxValues(0, 1)
-    statusBar:SetValue(1)
-    statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
   end
 
-  healthBar.absorbBar = healthBar:CreateTexture()
+  healthBar.healthMissing = healthBar:CreateTexture()
   do
-    local texture = healthBar.absorbBar
-    local color = settings.colors.background
-    texture:SetTexture("Interface\\RaidFrame\\Shield-Overlay")
-    texture:SetVertTile(true)
-    texture:SetHorizTile(true)
-    texture.tileSize = 32
-    texture:SetSize(32, 32)
-  end
-
-
-  healthBar.healthMissingStatusBar = _G.CreateFrame("StatusBar", nil, healthBar)
-  do
-    local statusBar = healthBar.healthMissingStatusBar
+    local texture = healthBar.healthMissing
     local color = settings.colors.health
-    statusBar:SetAllPoints()
-    if not mirror then
-      statusBar:SetReverseFill(true)
+    texture:SetTexture(color.r, color.g, color.b, color.a)
+    texture:SetPoint("TOP")
+    texture:SetPoint("BOTTOM")
+    if mirror then
+      texture:SetPoint("LEFT", healthBar)
+    else
+      texture:SetPoint("RIGHT", healthBar)
     end
-    statusBar:SetStatusBarTexture(settings.barTexture)
-    --statusBar:SetStatusBarTexture("Interface\\RaidFrame\\Shield-Fill")
-    --statusBar:SetStatusBarTexture("Interface\\RaidFrame\\Shield-Overlay")
-    --local texture = statusBar:GetStatusBarTexture()
-    --local texture = statusBar:CreateTexture()
-    --texture:SetTexture("Interface\\RaidFrame\\Shield-Overlay")
-    --texture:SetVertTile(true)
-    --texture:SetHorizTile(true)
-    --texture.tileSize = 32
-    --texture:SetSize(32, 32)
-    --statusBar:SetStatusBarTexture(texture)
-    statusBar:SetMinMaxValues(0, 1)
-    statusBar:SetValue(0)
-    statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
   end
 
-  healthBar.incomingStatusBar = _G.CreateFrame("StatusBar", nil, healthBar)
+  healthBar.incomingAndAbsorbs = healthBar:CreateTexture()
   do
-    local statusBar = healthBar.incomingStatusBar
-    local color = settings.colors.incomingHeals
-    statusBar:SetAllPoints()
+    local texture = healthBar.incomingAndAbsorbs
+    texture:SetTexture("interface\\addons\\" .. addonName .. "\\media\\textures\\shield2", false, false)
+    texture:SetHorizTile(false)
+    texture:SetVertTile(false)
+    texture:SetPoint("TOP")
+    texture:SetPoint("BOTTOM")
     if mirror then
-      statusBar:SetReverseFill(true)
+      texture:SetPoint("RIGHT", healthBar.health, "LEFT")
+    else
+      texture:SetPoint("LEFT", healthBar.health, "RIGHT")
     end
-    statusBar:SetStatusBarTexture(settings.barTexture)
-    statusBar:SetMinMaxValues(0, 1)
-    statusBar:SetValue(0)
-    statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+  end
+
+  healthBar.absorbs = healthBar:CreateTexture()
+  do
+    -- I'm using SetTexCoord() to prevent the texture from appearing to move (it looks like only what part of the
+    -- texture is shown changes, rather than the actual position of the texture changing). I couldn't get this to work
+    -- when tiling the image, so I opted to modify it by repeating the original 32x32 pixel image 8 times horizontally.
+    local texture = healthBar.absorbs
+    texture:SetTexture("interface\\addons\\" .. addonName .. "\\media\\textures\\shield", false, false)
+    texture:SetHorizTile(false)
+    texture:SetVertTile(false)
+    texture:SetPoint("TOP")
+    texture:SetPoint("BOTTOM")
+    if mirror then
+      texture:SetPoint("RIGHT", healthBar.incomingAndAbsorbs, "LEFT")
+    else
+      texture:SetPoint("LEFT", healthBar.incomingAndAbsorbs, "RIGHT")
+    end
+  end
+
+  healthBar.incomingHeals = healthBar:CreateTexture()
+  do
+    local texture = healthBar.incomingHeals
+    local color = settings.colors.incomingHeals
+    texture:SetTexture(color.r, color.g, color.b, color.a)
+    texture:SetPoint("TOP")
+    texture:SetPoint("BOTTOM")
+    if mirror then
+      texture:SetPoint("RIGHT", healthBar.incomingAndAbsorbs, "LEFT")
+    else
+      texture:SetPoint("LEFT", healthBar.incomingAndAbsorbs, "RIGHT")
+    end
   end
 
   if not mirror then
-    healthBar.fontString1 = healthBar.healthStatusBar:CreateFontString(nil, nil, "NinjaKittyFontStringLeft")
-    healthBar.fontString1:SetPoint("LEFT", healthBar.healthStatusBar, "LEFT", settings.fontSpacing, 0)
-    healthBar.fontString2 = healthBar.healthStatusBar:CreateFontString(nil, nil, "NinjaKittyFontStringRight")
-    healthBar.fontString2:SetPoint("RIGHT", healthBar.healthStatusBar, "RIGHT", -settings.fontSpacing, 0)
+    healthBar.fontString1 = healthBar:CreateFontString(nil, nil, "NinjaKittyFontStringLeft")
+    healthBar.fontString1:SetPoint("LEFT", healthBar, "LEFT", settings.fontSpacing, 0)
+    healthBar.fontString2 = healthBar:CreateFontString(nil, nil, "NinjaKittyFontStringRight")
+    healthBar.fontString2:SetPoint("RIGHT", healthBar, "RIGHT", -settings.fontSpacing, 0)
   else
-    healthBar.fontString1 = healthBar.healthStatusBar:CreateFontString(nil, nil, "NinjaKittyFontStringRight")
-    healthBar.fontString1:SetPoint("RIGHT", healthBar.healthStatusBar, "RIGHT", -settings.fontSpacing, 0)
-    healthBar.fontString2 = healthBar.healthStatusBar:CreateFontString(nil, nil, "NinjaKittyFontStringLeft")
-    healthBar.fontString2:SetPoint("LEFT", healthBar.healthStatusBar, "LEFT", settings.fontSpacing, 0)
+    healthBar.fontString1 = healthBar:CreateFontString(nil, nil, "NinjaKittyFontStringRight")
+    healthBar.fontString1:SetPoint("RIGHT", healthBar, "RIGHT", -settings.fontSpacing, 0)
+    healthBar.fontString2 = healthBar:CreateFontString(nil, nil, "NinjaKittyFontStringLeft")
+    healthBar.fontString2:SetPoint("LEFT", healthBar, "LEFT", settings.fontSpacing, 0)
   end
   healthBar.fontString2:SetShadowColor(0, 0, 0, 0)
   healthBar.fontString2:SetShadowOffset(0, 0)
@@ -190,44 +170,37 @@ function createHealthBar(unit, mirror)
     self.fontString2:SetWidth(width - leftTagWidth - settings.fontSpacing)
   end)
 
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
   healthBar:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
 
   function healthBar:UNIT_HEALTH_FREQUENT(unit)
-    local maxValue = _G.select(2, self.healthStatusBar:GetMinMaxValues())
-    local healthMax
-    local health
-    local totalAbsorbs
-    local incomingHeals
-    local healAbsorbs
-
+    local maxValue, healthMax, health, totalAbsorbs, incomingHeals, healAbsorbs
     if _G.UnitIsConnected(unit) then
       healthMax     = _G.UnitHealthMax(unit)
       health        = _G.UnitHealth(unit)
       totalAbsorbs  = _G.UnitGetTotalAbsorbs(unit)
-      incomingHeals = _G.UnitGetIncomingHeals(unit)
-      healAbsorbs   = _G.UnitGetTotalHealAbsorbs(unit)
+      incomingHeals = _G.UnitGetIncomingHeals(unit) or 0
+      healAbsorbs   = _G.UnitGetTotalHealAbsorbs(unit) or 0
     else
-      healthMax     = maxValue
-      health        = maxValue
+      healthMax     = self:GetWidth()
+      health        = self:GetWidth()
       totalAbsorbs  = 0
       incomingHeals = 0
       healAbsorbs   = 0
     end
 
-    -- UnitGetTotalHealAbsorbs() returns the amount of healing the unit will absorb without gaining
-    -- health. Caused by abilities like Necrotic Strike.
+    -- Adding totalAbsorbs is a valid approach. It means the health and absorbs textures never have to be cropped, but
+    -- their sizes are relative to the sum of maximum health and absorbs which can be misleading: 100k health and 100k
+    -- absorbs (for example from Saved by the Light) would result in a wider missing health bar than 200k health.
+    local maxValue = healthMax --[[+ totalAbsorbs]]
 
-    -- The actual amount of incoming healing. Added to the background bar but ignored by the health
-    -- bar.
-    if not incomingHeals or not healAbsorbs then
-      incomingHeals = 0
-    else
-      incomingHeals = incomingHeals - healAbsorbs
-      if incomingHeals < 0 then incomingHeals = 0 end
-    end
+    -- UnitGetTotalHealAbsorbs() returns the amount of healing the unit will absorb without gaining health. Caused by
+    -- abilities like Necrotic Strike. Update: Necrotic Strike was removed in Warlords of Draenor. I don't think there
+    -- are heal absorbs in PvP; there might not be any heal absorbs in the game now.
+
+    incomingHeals = _G.math.max(incomingHeals - healAbsorbs, 0)
 
     -- I don't think there's a dedicated event to inform us of a unit having died. Update: there is
     -- COMBAT_LOG_EVENT_UNFILTERED and its subevent UNIT_DIED.
@@ -238,32 +211,112 @@ function createHealthBar(unit, mirror)
     elseif _G.UnitIsPlayer(unit) then
       local class = (_G.select(2, _G.UnitClassBase(unit)))
       color = class and settings.classColors[class] or settings.colors.health
-    ]]
+    --]]
     else
       color = settings.colors.health
     end
+    self.healthMissing:SetTexture(color.r, color.g, color.b, color.a)
 
     if _G.UnitIsDeadOrGhost(unit) then
-      self.healthMissingStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
-      self.healthMissingStatusBar:SetValue(maxValue)
-      self.healthStatusBar:SetValue(0)
-      self.incomingStatusBar:SetValue((self.incomingStatusBar:GetMinMaxValues()))
+      self.health:Hide()
+      self.incomingAndAbsorbs:Hide()
+      self.absorbs:Hide()
+      self.incomingHeals:Hide()
+      self.healthMissing:SetWidth(self:GetWidth())
+      self.healthMissing:Show()
     else
-      self.healthMissingStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+      local healthWidth, absorbsWidth, incomingWidth, missingWidth
 
-      local offset = (health + totalAbsorbs) * self:GetWidth() / maxValue
-      --local offset = _G.math.floor(offset + .5)
-      if not mirror then
-        self.incomingStatusBar:SetPoint("TOPLEFT", self, "TOPLEFT", offset, 0)
-      else
-        self.incomingStatusBar:SetPoint("TOPRIGHT", self, "TOPRIGHT", -offset, 0)
+      healthWidth   = _G.math.floor(health * self:GetWidth() / maxValue + .5)
+      absorbsWidth  = _G.math.floor(totalAbsorbs * self:GetWidth() / maxValue + .5)
+      if healthWidth + absorbsWidth > self:GetWidth() then
+        -- If the absorbs texture would extend out of the bar, it can take up to 5 pixels from the health texture.
+        absorbsWidth = _G.math.max(self:GetWidth() - healthWidth, _G.math.min(absorbsWidth, 5))
+        healthWidth  = _G.math.max(self:GetWidth() - absorbsWidth, _G.math.min(healthWidth, self:GetWidth() - 5))
       end
-      self.incomingStatusBar:SetMinMaxValues(health + totalAbsorbs, maxValue)
-      self.incomingStatusBar:SetValue(health + totalAbsorbs + incomingHeals)
-      self.healthStatusBar:SetValue(health + totalAbsorbs)
+      incomingWidth = _G.math.floor(incomingHeals * self:GetWidth() / maxValue + .5)
+      missingWidth  = self:GetWidth() - healthWidth - _G.math.max(absorbsWidth, incomingWidth)
 
-      self.healthMissingStatusBar:SetValue(maxValue - health - totalAbsorbs - incomingHeals)
+      if healthWidth > 0 then
+        self.health:SetWidth(healthWidth)
+        self.health:Show()
+      else
+        -- Passing 0 to SetWidth() causes the region's width to be determined automatically according to its anchor
+        -- points (wowprogramming.com/docs/widgets/Region/SetWidth). Passing negative numbers causes it to be hidden,
+        -- but messes up regions anchored to it.
+        self.health:Hide()
+      end
+
+      -- TODO: reduce boilerplate!
+
+      local incomingAndAbsorbsWidth = _G.math.min(absorbsWidth, incomingWidth)
+      if incomingAndAbsorbsWidth > 0 then
+        self.incomingAndAbsorbs:SetWidth(incomingAndAbsorbsWidth)
+        local left, right
+        if mirror then
+          left  = self.incomingAndAbsorbs:GetLeft() - self:GetLeft()
+          right = left + incomingAndAbsorbsWidth
+        else
+          right = 256 + (self.incomingAndAbsorbs:GetRight() - self:GetRight())
+          left  = right - incomingAndAbsorbsWidth
+        end
+        self.incomingAndAbsorbs:SetTexCoord(left / 256, right / 256, 0, self.absorbs:GetHeight() / 32)
+        if not self.incomingAndAbsorbs:IsShown() then
+          self.incomingAndAbsorbs:Show()
+          if mirror then
+            healthBar.absorbs:SetPoint("RIGHT", healthBar.incomingAndAbsorbs, "LEFT")
+            healthBar.incomingHeals:SetPoint("RIGHT", healthBar.incomingAndAbsorbs, "LEFT")
+          else
+            healthBar.absorbs:SetPoint("LEFT", healthBar.incomingAndAbsorbs, "RIGHT")
+            healthBar.incomingHeals:SetPoint("LEFT", healthBar.incomingAndAbsorbs, "RIGHT")
+          end
+        end
+      elseif self.incomingAndAbsorbs:IsShown() then
+        self.incomingAndAbsorbs:Hide()
+        if mirror then
+          healthBar.absorbs:SetPoint("RIGHT", healthBar.health, "LEFT")
+          healthBar.incomingHeals:SetPoint("RIGHT", healthBar.health, "LEFT")
+        else
+          healthBar.absorbs:SetPoint("LEFT", healthBar.health, "RIGHT")
+          healthBar.incomingHeals:SetPoint("LEFT", healthBar.health, "RIGHT")
+        end
+      end
+
+      if absorbsWidth - incomingWidth > 0 then
+        self.absorbs:SetWidth(absorbsWidth - incomingWidth)
+        self.absorbs:Show()
+        local left, right
+        if mirror then
+          left  = self.absorbs:GetLeft() - self:GetLeft()
+          right = left + self.absorbs:GetWidth()
+        else
+          right = 256 + (self.absorbs:GetRight() - self:GetRight())
+          left  = right - self.absorbs:GetWidth()
+        end
+        self.absorbs:SetTexCoord(left / 256, right / 256, 0, self.absorbs:GetHeight() / 32)
+      else
+        self.absorbs:Hide()
+      end
+
+      local incomingTextureWidth = _G.math.min(incomingWidth - absorbsWidth,
+        self:GetWidth() - healthWidth - incomingAndAbsorbsWidth)
+      -- TODO: there's a bug where self:GetWidth() is slightly to big and not an integer, causing us to enter the
+      -- then-body of this if statement.
+      if incomingTextureWidth > 0 then
+        self.incomingHeals:SetWidth(incomingTextureWidth)
+        self.incomingHeals:Show()
+      else
+        self.incomingHeals:Hide()
+      end
+
+      if missingWidth > 0 then
+        self.healthMissing:SetWidth(missingWidth)
+        self.healthMissing:Show()
+      else
+        self.healthMissing:Hide()
+      end
     end
+
     if self:GetHeight() >= settings.fontSize then
       self.fontString1:SetText(healthTag(unit, healthMax, health, totalAbsorbs))
       self.fontString2:SetText(percentHealthTag(unit, healthMax, health, totalAbsorbs))
@@ -273,30 +326,15 @@ function createHealthBar(unit, mirror)
   healthBar.UNIT_HEALTH = healthBar.UNIT_HEALTH_FREQUENT
 
   function healthBar:update(unit)
-    local healthMax, totalAbsorbs
-    if _G.UnitIsConnected(unit) then
-      healthMax = _G.UnitHealthMax(unit)
-      totalAbsorbs = _G.UnitGetTotalAbsorbs(unit)
-    else
-      healthMax = _G.select(2, self.healthStatusBar:GetMinMaxValues())
-      totalAbsorbs = 0
-    end
-    self.healthMissingStatusBar:SetMinMaxValues(0, healthMax + totalAbsorbs)
-    self.healthStatusBar:SetMinMaxValues(0, healthMax + totalAbsorbs)
-    self:UNIT_HEALTH_FREQUENT(unit)
+    self:UNIT_MAXHEALTH(unit)
   end
 
   function healthBar:initialize(unit)
-    self.healthMissingStatusBar:SetMinMaxValues(0, 1)
-    self.healthMissingStatusBar:SetValue(0)
-    self.healthStatusBar:SetMinMaxValues(0, 1)
-    self.healthStatusBar:SetValue(1)
-    self.incomingStatusBar:SetMinMaxValues(0, 1)
-    self.incomingStatusBar:SetValue(0)
+    -- ...
   end
 
   function healthBar:UNIT_MAXHEALTH(unit)
-    self:update(unit)
+    self:UNIT_HEALTH_FREQUENT(unit)
   end
 
   function healthBar:UNIT_FACTION(unit)
@@ -332,9 +370,9 @@ function createHealthBar(unit, mirror)
   healthBar:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", unit)
   healthBar:RegisterUnitEvent("UNIT_MAXHEALTH", unit)
   healthBar:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", unit)
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
   return healthBar
 end
 
--- vim: tw=120 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et

@@ -1,4 +1,6 @@
-setfenv(1, NinjaKittyUF)
+local addonName, addon = ...
+
+setfenv(1, addon)
 
 -- Prototype.
 NameTag = {
@@ -20,8 +22,8 @@ do
   end
 
   local function containsMultiByteChar(string)
-    for i = 1, _G.string.len(name) do
-      if charSize(_G.string.byte(name, i)) > 1 then
+    for i = 1, _G.string.len(string) do
+      if charSize(_G.string.byte(string, i)) > 1 then
         return true
       end
     end
@@ -636,4 +638,4 @@ do
   f:RegisterEvent("UPDATE_BATTLEFIELD_SCORE")
 end
 
--- vim: tw=120 sw=2 ts=2 et
+-- vim: tw=120 sts=2 sw=2 et

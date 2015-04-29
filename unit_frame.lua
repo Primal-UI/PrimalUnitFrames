@@ -1,4 +1,6 @@
-setfenv(1, NinjaKittyUF)
+local addonName, addon = ...
+
+setfenv(1, addon)
 
 local function updateBackdrop(unitFrame)
   if _G.UnitExists(unitFrame.unit) and _G.UnitIsUnit(unitFrame.unit .. "target", "player") then
@@ -390,4 +392,4 @@ function createUnitFrame(attributes)
   return unitFrame
 end
 
--- vim: tw=120 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et
