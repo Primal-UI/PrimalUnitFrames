@@ -254,7 +254,6 @@ function createUnitFrame(attributes)
 
   elseif _G.string.match(unitFrame.unit, "arena") then
     unitFrame:SetAttribute("_onstate-unitexists", [[ -- arguments: self, stateid, newstate
-      --print("_onstate-unitexists", self, stateid, newstate)
       if newstate then
         self:CallMethod("update")
         if not self:IsShown() then self:Show() end
@@ -351,23 +350,16 @@ function createUnitFrame(attributes)
     unitFrame:RegisterUnitEvent("PARTY_MEMBER_DISABLE", unitFrame.unit)
 
   elseif _G.string.match(unitFrame.unit, "raid") then
-    -- Not implemented.
+    _G.error() -- Not implemented.
   end
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
-  ----[[
   if not unitFrame:HasScript("OnShow") then
     unitFrame:SetScript("OnShow", function(self) end)
   end
   unitFrame:HookScript("OnShow", function(self)
     self:update()
   end)
-  --]]
-  --[[
-  unitFrame:SetScript("OnShow", function(self)
-    self:update()
-  end)
-  ]]
 
   unitFrame:SetScript("OnEnter", function(self, motion)
     --self:SetBackdropBorderColor(1.0, 1.0, 1.0, 1.0)

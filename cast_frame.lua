@@ -38,7 +38,7 @@ function createCastFrame(attributes)
     castFrame.icon:SetBackdrop(settings.unitFrameBackdrop)
     castFrame.icon:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
 
-    castFrame.icon.texture = castFrame.icon:CreateTexture(--[[nil, "BACKGROUND"]])
+    castFrame.icon.texture = castFrame.icon:CreateTexture()
     castFrame.icon.texture:SetAllPoints()
   end
 
@@ -75,9 +75,9 @@ function createCastFrame(attributes)
   castFrame.rightTag:SetPoint("RIGHT", castFrame.castStatusBar, "RIGHT", -settings.fontSpacing, 0)
 
   castFrame:SetHeight(attributes.height)
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
   castFrame:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
@@ -101,11 +101,9 @@ function createCastFrame(attributes)
 
     if self.icon then self.icon.texture:SetTexture(texture) end
     if notInterruptible then
-      local color = settings.colors.castingNotInterruptible
-      self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+      self:UNIT_SPELLCAST_NOT_INTERRUPTIBLE(unit)
     else
-      local color = settings.colors.casting
-      self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+      self:UNIT_SPELLCAST_INTERRUPTIBLE(unit)
     end
     self.castStatusBar:SetMinMaxValues(0, self.maxValue)
     self.castStatusBar:SetValue(self.value)
@@ -156,12 +154,24 @@ function createCastFrame(attributes)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
     local color = settings.colors.casting
     self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+    --if _G.UnitIsEnemy("player", unit) then
+    --if _G.UnitCanAttack("player", unit) then
+    if unit ~= "player" and not _G.string.match(unit, "party") then
+      self:SetBackdropBorderColor(1, 1, 1)
+      if self.icon then
+        self.icon:SetBackdropBorderColor(1, 1, 1)
+      end
+    end
   end
 
   function castFrame:UNIT_SPELLCAST_NOT_INTERRUPTIBLE(unit)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
     local color = settings.colors.castingNotInterruptible
     self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+    self:SetBackdropBorderColor(0, 0, 0)
+    if self.icon then
+      self.icon:SetBackdropBorderColor(0, 0, 0)
+    end
   end
 
   function castFrame:UNIT_SPELLCAST_CHANNEL_START(unit, spell, rank, castID, spellID)
@@ -179,11 +189,9 @@ function createCastFrame(attributes)
 
     if self.icon then self.icon.texture:SetTexture(texture) end
     if notInterruptible then
-      local color = settings.colors.castingNotInterruptible
-      self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+      self:UNIT_SPELLCAST_NOT_INTERRUPTIBLE(unit)
     else
-      local color = settings.colors.casting
-      self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+      self:UNIT_SPELLCAST_INTERRUPTIBLE(unit)
     end
     self.castStatusBar:SetMinMaxValues(0, self.maxValue)
     self.castStatusBar:SetValue(self.value)
@@ -221,7 +229,7 @@ function createCastFrame(attributes)
     self.channeling = false
     self:UNIT_SPELLCAST_STOP(unit, spell, rank, castID, spellID)
   end
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
   local function onUpdate(self, elapsed)
     if not self.casting and not self.channeling then return end

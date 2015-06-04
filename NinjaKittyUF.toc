@@ -1,7 +1,7 @@
 ## Interface: 60100
-## Title: PrimalUnitFrames
-## Notes: Unit Frames for Primal UI.
-## Dependencies: NinjaKittyCore
+## Title: |cffff7d0aPrimalUnitFrames|r
+## Notes: Unit Frames for PrimalUI.
+## Dependencies: PrimalCore, PrimalMedia
 ## OptionalDeps:
 ## Author: meribold
 ## Version: 0.1

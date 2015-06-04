@@ -21,7 +21,6 @@ settings = {
     background = { r = 0, g = 0, b = 0, a = .5, colorStr = "80000000" },
     casting = { r = .85, g = .25, b = .25, a = .75, colorStr = "bfd94040" },
     castingNotInterruptible = { r = 0.75, g = 0.25, b = 0.85, a = 0.75, colorStr = "bfbf40d9" },
-    --castingNotInterruptible = { r = 0.5, g = 0.0, b = 0.75, a = 0.75, colorStr = "bf8000bf" },
     dead = { r = 0.75, g = 0.75, b = 0.75, a = 0.25, colorStr = "40bfbfbf" },
     incomingHeals = { r = 0.5, g = 0.5, b = 0.5, a = 0.75, colorStr = "bf808080" },
     incomingDark = { r = 0.25, g = 0.25, b = 0.25, a = 0.75, colorStr = "bf404040" },
@@ -44,14 +43,13 @@ settings = {
   },
 }
 
-----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
 -- http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitFrame.lua
 -- http://forums.wowace.com/showthread.php?t=18724
 settings.powerColors = {}
 for powerToken, color in _G.pairs(_G.PowerBarColor) do
   if color.r and color.g and color.b then
-    settings.powerColors[powerToken] = { r = color.r, g = color.g, b = color.b,
-                                         a = settings.powerAlpha }
+    settings.powerColors[powerToken] = { r = color.r, g = color.g, b = color.b, a = settings.powerAlpha }
     -- %02x means a hexadecimal number ('x'), with at least two digits and zero padding. The leading
     -- "ff" means the color should be fully opaque.
     settings.powerColors[powerToken].colorStr = _G.string.format("ff%02x%02x%02x", color.r * 255,
@@ -67,7 +65,7 @@ settings.powerColors["MANA"].g = 0x80 / 0xff
 settings.powerColors["MANA"].b = 0xff / 0xff
 ----------------------------------------------------------------------------------------------------
 
-settings.defaultFont:SetFont([[Interface\AddOns\NinjaKittyMedia\fonts\Ubuntu-M.ttf]], 11, "")
+settings.defaultFont:SetFont([[Interface\AddOns\PrimalMedia\fonts\Ubuntu-M.ttf]], 11, "")
 settings.defaultFont:SetShadowColor(0.0, 0.0, 0.0, 1.0) -- Black and fully opaque.
 settings.defaultFont:SetShadowOffset(1, -1)
 
@@ -117,31 +115,35 @@ _G.table.insert(frameAttributes, {
 
   width = settings.defaults.width,
 
-  --[[
-  point         = "BOTTOMLEFT",
-  relativeTo    = "UIParent",
-  relativePoint = "BOTTOMLEFT",
-  xOffset       = 467,
-  yOffset       = 348,
-  ]]
-
   point         = "TOPLEFT",
   relativeTo    = "UIParent",
   relativePoint = "LEFT",
   xOffset       = 467,
-  --yOffset       = -96,
   yOffset       = -32,
 
   bars = {
+    --[[
+    {
+      create = createManaBar,
+      height = 2,
+    },
+    --]]
+    {
+      create = createHealthBar,
+      height = 20,
+      mirror = true,
+    },
+    ----[[
     {
       create = createManaBar,
       height = 2,
     },
     {
       create = createHealthBar,
-      height = 20,
+      height = 6,
       mirror = true,
     },
+    --]]
   },
 })
 
@@ -159,12 +161,17 @@ _G.table.insert(frameAttributes, {
 
   bars = {
     {
+      create = createHealthBar,
+      height = 20,
+      mirror = true,
+    },
+    {
       create = createPowerBar,
       height = 2,
     },
     {
       create = createHealthBar,
-      height = 20,
+      height = 6,
       mirror = true,
     },
   },
@@ -263,14 +270,6 @@ _G.table.insert(frameAttributes, {
   create = createUnitFrame,
 
   width = settings.defaults.width,
-
-  --[[
-  point         = "BOTTOMRIGHT",
-  relativeTo    = "UIParent",
-  relativePoint = "BOTTOMRIGHT",
-  xOffset       = -467,
-  yOffset       = 348,
-  ]]
 
   point         = "BOTTOMLEFT",
   relativeTo    = "NKPlayerFrame",

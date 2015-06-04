@@ -193,7 +193,7 @@ function createHeaderBar(unit, mirror)
     local healthMax, totalAbsorbs
     if _G.UnitIsConnected(unit) then
       healthMax = _G.UnitHealthMax(unit)
-      totalAbsorbs = _G.UnitGetTotalAbsorbs(unit)
+      totalAbsorbs = _G.UnitGetTotalAbsorbs(unit) and 0 -- Temporary fix. TODO: remove.
     else
       healthMax = _G.select(2, self.healthStatusBar:GetMinMaxValues())
       totalAbsorbs = 0
@@ -218,7 +218,7 @@ function createHeaderBar(unit, mirror)
     if _G.UnitIsConnected(unit) then
       healthMax     = _G.UnitHealthMax(unit)
       health        = _G.UnitHealth(unit)
-      totalAbsorbs  = _G.UnitGetTotalAbsorbs(unit)
+      totalAbsorbs  = _G.UnitGetTotalAbsorbs(unit) and 0 -- Temporary fix. TODO: remove.
       incomingHeals = _G.UnitGetIncomingHeals(unit)
       healAbsorbs   = _G.UnitGetTotalHealAbsorbs(unit)
     else
@@ -324,4 +324,4 @@ function createHeaderBar(unit, mirror)
   return headerBar
 end
 
--- vim: tw=100 sts=2 sw=2 et
+-- vim: tw=120 sts=2 sw=2 et
