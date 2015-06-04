@@ -8,7 +8,7 @@ settings = {
   insets = { left = 1, right = 1, top = 1, bottom = 1 },
   fontSpacing = 2,
   classColors = _G.RAID_CLASS_COLORS,
-  barTexture = [[Interface\AddOns\NinjaKittyUF\media\textures\plain_white]],
+  barTexture = [[Interface\AddOns\]] .. addonName ..  [[\media\textures\plain_white]],
   defaultFont = _G.CreateFont("NKUFDefaultFont"),
   fontSize = 11,
   strings = {
@@ -70,29 +70,27 @@ settings.defaultFont:SetShadowColor(0.0, 0.0, 0.0, 1.0) -- Black and fully opaqu
 settings.defaultFont:SetShadowOffset(1, -1)
 
 settings.defaultBackdrop = {
-  bgFile = "Interface\\ChatFrame\\ChatFrameBackground", 
+  bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
 }
 
 -- See wowprogramming.com/docs/widgets/Frame/SetBackdrop and
 -- http://wowprogramming.com/docs/api_types#backdrop.
 settings.unitFrameBackdrop = {
-  --bgFile = "Interface\\ChatFrame\\ChatFrameBackground", 
-  edgeFile = "Interface\\ChatFrame\\ChatFrameBackground", 
+  --bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+  edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
   --tile = false,
   edgeSize = 1,
 }
 
 settings.kittyPowerFrameBackdrop = {
-  bgFile = "Interface\\ChatFrame\\ChatFrameBackground", 
-  --edgeFile = [[Interface\\ChatFrame\\ChatFrameBackground]], 
+  bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+  --edgeFile = [[Interface\\ChatFrame\\ChatFrameBackground]],
   --edgeSize = 1,
 }
 
 settings.headerBarBackdrop = {
-  --bgFile = "Interface\\AddOns\\NinjaKittyUF\\media\\textures\\plain_white",
-  bgFile = "Interface\\ChatFrame\\ChatFrameBackground", 
-  --edgeFile = "Interface\\AddOns\\NinjaKittyUF\\media\\textures\\plain_white",
-  --edgeFile = "Interface\\ChatFrame\\ChatFrameBackground", 
+  bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+  --edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
   --[[
   tile = false,
   tileSize = 32,

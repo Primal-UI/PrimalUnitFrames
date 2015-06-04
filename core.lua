@@ -1,5 +1,3 @@
-local addonName, addon = ...
-
 --[[
 I think UNIT_POWER_BAR_SHOW and UNIT_POWER_BAR_HIDE relate to the UnitPowerBarAlt frame.
 See: http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitPowerBarAlt.lua
@@ -7,13 +5,11 @@ See: http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitPowerBarAlt.lu
 http://wowpedia.org/COMBAT_LOG_EVENT. Is destGUID etc. actually set for a SPELL_CAST_START event?
 ]]
 
+local addonName, addon = ...
 addon._G = _G
-NinjaKittyUF = addon
-
---NinjaKittyUF = LibStub("AceAddon-3.0"):NewAddon("NinjaKittyUF", "AceConsole-3.0")
---NinjaKittyUF._G = _G
-
-setfenv(1, NinjaKittyUF)
+_G[addonName] = addon
+_G.NinjaKittyUF = addon -- TODO: remove.
+setfenv(1, addon)
 
 -- http://wowprogramming.com/docs/api_types#specID
 -- http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitFrame.lua
