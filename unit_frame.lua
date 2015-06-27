@@ -43,8 +43,8 @@ function createUnitFrame(attributes)
   else
     unitButton = _G.CreateFrame("Button", attributes.name, _G.UIParent, "SecureUnitButtonTemplate")
     unitButton:SetAttribute("*type1", "target")
-    unitButton:SetAttribute("*type2", "focus")
-    unitButton:SetAttribute("*type3", "togglemenu")
+    unitButton:SetAttribute("*type2", "togglemenu")
+    unitButton:SetAttribute("*type3", "focus")
     unitFrame = unitButton
   end
   unitFrame:SetAttribute("unit", attributes.unit)

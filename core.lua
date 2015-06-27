@@ -134,7 +134,6 @@ function handlerFrame:ADDON_LOADED(name)
     ]])
 
     header:WrapScript(proxyFrame, "OnShow", [[
-      print("foo2")
       for i = 1, 4 do
         UnregisterUnitWatch(partyFrames[i])
         partyFrames[i]:Hide()
@@ -142,7 +141,6 @@ function handlerFrame:ADDON_LOADED(name)
     ]])
 
     header:WrapScript(proxyFrame, "OnHide", [[
-      print("bar2")
       for i = 1, 4 do
         RegisterUnitWatch(partyFrames[i])
         partyFrames[i]:Show()

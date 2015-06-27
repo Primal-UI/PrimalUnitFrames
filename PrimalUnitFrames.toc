@@ -1,4 +1,4 @@
-## Interface: 60100
+## Interface: 60200
 ## Title: |cffff7d0aPrimalUnitFrames|r
 ## Notes: Unit Frames for PrimalUI.
 ## Dependencies: PrimalCore, PrimalMedia
