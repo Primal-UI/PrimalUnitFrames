@@ -1,3 +1,5 @@
+-- TODO: Don't use StatusBar frames.  Just use textures.
+
 local addonName, addon = ...
 
 setfenv(1, addon)
@@ -20,77 +22,89 @@ local kittyPowerTag = function(unit)
 end
 
 function createKittyPowerFrame(attributes)
-  local kittyPowerFrame = _G.CreateFrame("Frame", attributes.name, _G.UIParent)
-  kittyPowerFrame:SetPoint(attributes.point, _G[attributes.relativeTo], attributes.relativePoint,
+  local self = _G.CreateFrame("Frame", attributes.name, _G.UIParent)
+  self:SetPoint(attributes.point, _G[attributes.relativeTo], attributes.relativePoint,
     attributes.xOffset, attributes.yOffset)
-  kittyPowerFrame:SetWidth(attributes.width)
-  kittyPowerFrame:SetHeight(attributes.height)
-  kittyPowerFrame:SetBackdrop(settings.unitFrameBackdrop)
-  kittyPowerFrame:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
+  self:SetWidth(attributes.width)
+  self:SetHeight(attributes.height)
+  self:SetBackdrop(settings.unitFrameBackdrop)
+  self:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
 
-  kittyPowerFrame.tagFrame = _G.CreateFrame("Frame", nil, kittyPowerFrame)
-  kittyPowerFrame.tagFrame.fontString = kittyPowerFrame.tagFrame:CreateFontString(nil, nil, "NinjaKittyFontStringLeft")
-  kittyPowerFrame.tagFrame.fontString:SetPoint("LEFT", kittyPowerFrame.tagFrame, "LEFT", settings.fontSpacing, 0)
+  self.tagFrame = _G.CreateFrame("Frame", nil, self)
+  self.tagFrame.fontString = self.tagFrame:CreateFontString(nil, nil, "NinjaKittyFontStringLeft")
+  self.tagFrame.fontString:SetPoint("LEFT", self.tagFrame, "LEFT", settings.fontSpacing, 0)
   do
-    local tagFrame = kittyPowerFrame.tagFrame
-    tagFrame:SetPoint("TOPLEFT", kittyPowerFrame, "BOTTOMLEFT", 4, 0)
+    local tagFrame = self.tagFrame
+    tagFrame:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 4, 0)
     tagFrame:SetHeight(settings.fontSize + 2 * settings.fontSpacing)
     tagFrame:SetBackdrop(settings.kittyPowerFrameBackdrop)
     tagFrame:SetBackdropColor(settings.colors.background.r, settings.colors.background.g,
       settings.colors.background.b, settings.colors.background.a)
     tagFrame:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
-    --local fontString = kittyPowerFrame.tagFrame.fontString
-    --fontString:SetFontObject(settings.defaultFont)
-    --fontString:SetWordWrap(false)
-    --fontString:SetJustifyH("LEFT")
-    --fontString:SetJustifyV("MIDDLE")
-    --fontString:SetPoint("LEFT", kittyPowerFrame.tagFrame, "LEFT", settings.fontSpacing, 0)
   end
+
+  self.healthFrame = _G.CreateFrame("Frame", nil, self)
+  self.healthFrame.fontString = self.healthFrame:CreateFontString(nil, nil, "NinjaKittyFontStringLeft")
+  self.healthFrame.fontString:SetPoint("LEFT", self.healthFrame, "LEFT", settings.fontSpacing, 0)
+  do
+    local frame = self.healthFrame
+    frame:SetPoint("TOPLEFT", self, "BOTTOM", 5, 0)
+    --frame:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", -4, 0)
+    frame:SetHeight(settings.fontSize + 2 * settings.fontSpacing)
+    frame:SetBackdrop(settings.kittyPowerFrameBackdrop)
+    frame:SetBackdropColor(settings.colors.background.r, settings.colors.background.g,
+      settings.colors.background.b, settings.colors.background.a)
+    frame:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
+  end
+  self.healthTag = PercentHealthTag:new("target", function(number)
+    if number --[[and 25 <= number]] and number <= 50 then
+      self.healthFrame.fontString:SetText(number)
+      self.healthFrame.fontString:SetWidth(self.healthFrame.fontString:GetStringWidth())
+      self.healthFrame:SetWidth(self.healthFrame.fontString:GetStringWidth() + 2 * settings.fontSpacing)
+      self.healthFrame:Show()
+    else
+      self.healthFrame:Hide()
+    end
+  end)
 
   --------------------------------------------------------------------------------------------------
   --------------------------------------------------------------------------------------------------
-  kittyPowerFrame.backgroundStatusBar = _G.CreateFrame("StatusBar", nil, kittyPowerFrame)
+  self.backgroundStatusBar = _G.CreateFrame("StatusBar", nil, self)
   do
-    local statusBar = kittyPowerFrame.backgroundStatusBar
-    statusBar:SetPoint("TOPLEFT", kittyPowerFrame, "TOPLEFT", settings.insets.left,
-      -settings.insets.top)
-    statusBar:SetPoint("BOTTOMRIGHT", kittyPowerFrame, "BOTTOMRIGHT", -settings.insets.right,
-      settings.insets.bottom)
+    local statusBar = self.backgroundStatusBar
+    statusBar:SetPoint("TOPLEFT", settings.insets.left, -settings.insets.top)
+    statusBar:SetPoint("BOTTOMRIGHT", -settings.insets.right, settings.insets.bottom)
     statusBar:SetReverseFill(true)
     statusBar:SetStatusBarTexture(settings.barTexture)
     statusBar:SetStatusBarColor(settings.colors.background.r, settings.colors.background.g,
       settings.colors.background.b, settings.colors.background.a)
   end
 
-  kittyPowerFrame.energyStatusBar = _G.CreateFrame("StatusBar", nil, kittyPowerFrame)
+  self.energyStatusBar = _G.CreateFrame("StatusBar", nil, self)
   do
-    local statusBar = kittyPowerFrame.energyStatusBar
-    statusBar:SetPoint("TOPLEFT", kittyPowerFrame, "TOPLEFT", settings.insets.left,
-      -settings.insets.top)
-    statusBar:SetPoint("BOTTOMRIGHT", kittyPowerFrame, "BOTTOMRIGHT", -settings.insets.right,
-      settings.insets.bottom)
+    local statusBar = self.energyStatusBar
+    statusBar:SetPoint("TOPLEFT", settings.insets.left, -settings.insets.top)
+    statusBar:SetPoint("BOTTOMRIGHT", -settings.insets.right, settings.insets.bottom)
     statusBar:SetStatusBarTexture(settings.barTexture)
     local energyColor = settings.powerColors["ENERGY"]
   end
 
-  kittyPowerFrame.rageStatusBar = _G.CreateFrame("StatusBar", nil, kittyPowerFrame)
+  self.rageStatusBar = _G.CreateFrame("StatusBar", nil, self)
   do
-    local statusBar = kittyPowerFrame.rageStatusBar
-    statusBar:SetPoint("TOPLEFT", kittyPowerFrame, "TOPLEFT", settings.insets.left,
-      -settings.insets.top)
-    statusBar:SetPoint("BOTTOMRIGHT", kittyPowerFrame, "BOTTOMRIGHT", -settings.insets.right,
-      settings.insets.bottom)
+    local statusBar = self.rageStatusBar
+    statusBar:SetPoint("TOPLEFT", settings.insets.left, -settings.insets.top)
+    statusBar:SetPoint("BOTTOMRIGHT", -settings.insets.right, settings.insets.bottom)
     statusBar:SetStatusBarTexture(settings.barTexture)
     local color = settings.powerColors["RAGE"]
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
   end
 
   --------------------------------------------------------------------------------------------------
-  kittyPowerFrame:SetScript("OnEvent", function(self, event, ...)
+  self:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
 
-  function kittyPowerFrame:UNIT_MAXPOWER(unit)
+  function self:UNIT_MAXPOWER(unit)
     local energyMax    = _G.UnitPowerMax(unit, _G.SPELL_POWER_ENERGY)
     local rageMax      = _G.UnitPowerMax(unit, _G.SPELL_POWER_RAGE)
     local energyBarMax = _G.select(2, self.energyStatusBar:GetMinMaxValues())
@@ -104,9 +118,9 @@ function createKittyPowerFrame(attributes)
       end
     end
   end
-  kittyPowerFrame:RegisterUnitEvent("UNIT_MAXPOWER", "player")
+  self:RegisterUnitEvent("UNIT_MAXPOWER", "player")
 
-  function kittyPowerFrame:UNIT_POWER_FREQUENT(unit)
+  function self:UNIT_POWER_FREQUENT(unit)
     if _G.UnitIsDeadOrGhost(unit) then
       self.energyStatusBar:SetValue(0)
       self.rageStatusBar:SetValue(0)
@@ -118,22 +132,21 @@ function createKittyPowerFrame(attributes)
       local rageMax   = _G.UnitPowerMax(unit, _G.SPELL_POWER_RAGE)
       local rage      = _G.UnitPower(unit, _G.SPELL_POWER_RAGE)
 
+      self.energyStatusBar:SetValue(energy)
+
       if _G.UnitPowerType(unit) == _G.SPELL_POWER_RAGE then
-        --local offset = _G.math.floor(self:GetWidth() * rage / rageMax + 0.5)
-        local offset = self:GetWidth() * rage / rageMax + 0.5
-        self.energyStatusBar:SetPoint("TOPLEFT", self, "TOPLEFT", offset, -settings.insets.top)
+        local offset = self.rageStatusBar:GetWidth() * rage / rageMax -- Rounding this doesn't work out.
+        self.energyStatusBar:SetPoint("TOPLEFT", settings.insets.left + offset, -settings.insets.top)
         self.energyStatusBar:SetMinMaxValues(rage, energyMax)
         self.rageStatusBar:SetValue(rage)
       end
 
-      if energy * rageMax < rage * energyMax then
+      if _G.UnitPowerType(unit) == _G.SPELL_POWER_RAGE and energy * rageMax < rage * energyMax then
         -- The filled portion of the energy bar is shorter than that of the rage bar.
         self.backgroundStatusBar:SetValue(rageMax - rage)
       else
         self.backgroundStatusBar:SetValue(energyMax - energy)
       end
-
-      self.energyStatusBar:SetValue(energy)
 
       if _G.UnitPowerType(unit) ~= _G.SPELL_POWER_RAGE and energy == energyMax then
         self.tagFrame:Hide()
@@ -145,9 +158,9 @@ function createKittyPowerFrame(attributes)
       end
     end
   end
-  kittyPowerFrame:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
+  self:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
 
-  function kittyPowerFrame:UNIT_DISPLAYPOWER(unit)
+  function self:UNIT_DISPLAYPOWER(unit)
     local energyMax = _G.UnitPowerMax(unit, _G.SPELL_POWER_ENERGY)
     local color     = settings.powerColors["ENERGY"]
     if _G.UnitPowerType(unit) == _G.SPELL_POWER_ENERGY then
@@ -157,46 +170,44 @@ function createKittyPowerFrame(attributes)
     end
     if _G.UnitPowerType(unit) == _G.SPELL_POWER_RAGE then
     else
-      self.energyStatusBar:SetPoint("TOPLEFT", kittyPowerFrame, "TOPLEFT", settings.insets.left,
-        -settings.insets.top)
-      self.energyStatusBar:SetPoint("BOTTOMRIGHT", kittyPowerFrame, "BOTTOMRIGHT",
-        -settings.insets.right,
-      settings.insets.bottom)
+      self.energyStatusBar:SetPoint("TOPLEFT", settings.insets.left, -settings.insets.top)
+      self.energyStatusBar:SetPoint("BOTTOMRIGHT", -settings.insets.right, settings.insets.bottom)
       self.energyStatusBar:SetMinMaxValues(0, energyMax)
       self.rageStatusBar:SetValue(0)
     end
     self:UNIT_POWER_FREQUENT(unit)
   end
-  kittyPowerFrame:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
+  self:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
   --------------------------------------------------------------------------------------------------
 
   -- Stuff we need to do when PLAYER_LOGIN fires.
-  function kittyPowerFrame:initialize()
+  function self:initialize()
     local energyMax = _G.UnitPowerMax("player", _G.SPELL_POWER_ENERGY)
     local rageMax   = _G.UnitPowerMax("player", _G.SPELL_POWER_RAGE)
     self.backgroundStatusBar:SetMinMaxValues(0, _G.math.max(energyMax, rageMax))
     self.energyStatusBar:SetMinMaxValues(0, _G.math.max(energyMax, rageMax))
     self.rageStatusBar:SetMinMaxValues(0, _G.math.max(energyMax, rageMax))
+    self.healthTag:enable()
   end
 
   -- Stuff we need to do when PLAYER_ENTERING_WORLD fires.
-  function kittyPowerFrame:update()
+  function self:update()
     self:UNIT_DISPLAYPOWER("player")
   end
 
-  function kittyPowerFrame:PLAYER_LOGIN()
+  function self:PLAYER_LOGIN()
     self:initialize()
   end
-  kittyPowerFrame:RegisterEvent("PLAYER_LOGIN")
+  self:RegisterEvent("PLAYER_LOGIN")
 
-  function kittyPowerFrame:PLAYER_ENTERING_WORLD()
+  function self:PLAYER_ENTERING_WORLD()
     self:update()
   end
-  kittyPowerFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+  self:RegisterEvent("PLAYER_ENTERING_WORLD")
   --------------------------------------------------------------------------------------------------
   --------------------------------------------------------------------------------------------------
 
-  return kittyPowerFrame
+  return self
 end
 
 -- vim: tw=120 sts=2 sw=2 et

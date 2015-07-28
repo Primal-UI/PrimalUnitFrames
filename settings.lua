@@ -235,6 +235,29 @@ _G.table.insert(frameAttributes, {
 })
 ]]
 
+--[[
+_G.table.insert(frameAttributes, {
+  name = "PUFTargetHealth",
+  unit = "target",
+  create = createUnitFrame,
+
+  point         = "BOTTOM",
+  relativeTo    = "UIParent",
+  relativePoint = "BOTTOM",
+  xOffset       = 0,
+  yOffset       = 368,
+  width         = 168,
+  height        = 4,
+
+  bars = {
+    {
+      create = createHealthBar,
+      height = 2,
+    },
+  },
+})
+]]
+
 _G.table.insert(frameAttributes, {
   name = "NKKittyPowerFrame",
   create = createKittyPowerFrame,

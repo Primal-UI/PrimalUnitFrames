@@ -9,6 +9,8 @@
 embeds.xml
 
 core.lua
+tags.lua
+
 header_bar.lua
 health_bar.lua
 power_bar.lua
@@ -16,5 +18,4 @@ cast_frame.lua
 kitty_power_frame.lua
 player_power_bar_alt.lua
 unit_frame.lua
-tags.lua
 settings.lua

@@ -61,8 +61,8 @@ function createCastFrame(attributes)
       statusBar:SetPoint("BOTTOMRIGHT", castFrame, "BOTTOMRIGHT", -1, 1)
       if not mirror then statusBar:SetReverseFill(true) end
       statusBar:SetStatusBarTexture(settings.barTexture)
-      statusBar:SetStatusBarColor(settings.colors.background.r, settings.colors.background.g,
-        settings.colors.background.b, settings.colors.background.a)
+      local color = settings.colors.background
+      statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
       statusBar:SetMinMaxValues(0, castFrame.maxValue)
       statusBar:SetValue(castFrame.maxValue)
     end
@@ -156,10 +156,15 @@ function createCastFrame(attributes)
     self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
     --if _G.UnitIsEnemy("player", unit) then
     --if _G.UnitCanAttack("player", unit) then
+    --self.backgroundStatusBar:SetStatusBarColor(1., 1., 1., .25)
+    self.backgroundStatusBar:SetStatusBarColor(1., 1., 1., .35)
+    --self.backgroundStatusBar:SetStatusBarColor(1., 1., 1., .4)
+    --self.backgroundStatusBar:SetStatusBarColor(.75, .75, .75, .5)
+    --self.backgroundStatusBar:SetStatusBarColor(.5, .5, .5, .5)
     if unit ~= "player" and not _G.string.match(unit, "party") then
-      self:SetBackdropBorderColor(1, 1, 1)
+      --self:SetBackdropBorderColor(1, 1, 1)
       if self.icon then
-        self.icon:SetBackdropBorderColor(1, 1, 1)
+        --self.icon:SetBackdropBorderColor(1, 1, 1)
       end
     end
   end
@@ -168,9 +173,11 @@ function createCastFrame(attributes)
     _G.assert(_G.UnitIsUnit(unit, self.unit))
     local color = settings.colors.castingNotInterruptible
     self.castStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
-    self:SetBackdropBorderColor(0, 0, 0)
+    local color = settings.colors.background
+    self.backgroundStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
+    --self:SetBackdropBorderColor(0, 0, 0)
     if self.icon then
-      self.icon:SetBackdropBorderColor(0, 0, 0)
+      --self.icon:SetBackdropBorderColor(0, 0, 0)
     end
   end
 

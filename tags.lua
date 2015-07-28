@@ -2,8 +2,67 @@ local addonName, addon = ...
 
 setfenv(1, addon)
 
--- Prototype.
-NameTag = {
+------------------------------------------------------------------------------------------------------------------------
+PercentHealthTag = { -- Prototype
+  tags = {},
+}
+
+do
+  function PercentHealthTag:new(unit, callback)
+    local object = _G.setmetatable({}, { __index = self })
+    object.unit = unit
+    object.callback = callback
+    object.text = ""
+    return object
+  end
+
+  function PercentHealthTag:enable()
+    self.tags[self.unit] = self
+    self:update()
+  end
+
+  function PercentHealthTag:disable()
+    self.tags[self.unit] = nil
+  end
+
+  function PercentHealthTag:update()
+    local health, healthMax = _G.UnitHealth(self.unit), _G.UnitHealthMax(self.unit)
+    if health and healthMax and healthMax ~= 0 then
+      self.text = _G.math.floor(100 * health / healthMax + .5)
+    else
+      self.text = nil
+    end
+    self.callback(self.text)
+  end
+
+  local eventHandler = _G.CreateFrame("Frame")
+  eventHandler:SetScript("OnEvent", function(self, event, ...)
+    return PercentHealthTag[event](PercentHealthTag, ...)
+  end)
+
+  function PercentHealthTag:UNIT_HEALTH_FREQUENT(unit)
+    local tag = self.tags[unit]
+    if tag then
+      tag:update()
+    end
+  end
+
+  PercentHealthTag.UNIT_MAXHEALTH = PercentHealthTag.UNIT_HEALTH_FREQUENT
+
+  function PercentHealthTag:PLAYER_TARGET_CHANGED(cause)
+    for _, tag in _G.pairs(self.tags) do
+      tag:update()
+    end
+  end
+
+  eventHandler:RegisterEvent("UNIT_HEALTH_FREQUENT")
+  eventHandler:RegisterEvent("UNIT_MAXHEALTH")
+  eventHandler:RegisterEvent("PLAYER_TARGET_CHANGED")
+end
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+NameTag = { -- Prototype
   tags = {},
 }
 

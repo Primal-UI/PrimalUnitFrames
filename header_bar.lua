@@ -2,8 +2,7 @@ local addonName, addon = ...
 
 setfenv(1, addon)
 
--- Prototype.
-HeaderBar = {
+HeaderBar = { -- Prototype
 
 }
 

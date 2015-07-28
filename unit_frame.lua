@@ -4,7 +4,9 @@ setfenv(1, addon)
 
 local function updateBackdrop(unitFrame)
   if _G.UnitExists(unitFrame.unit) and _G.UnitIsUnit(unitFrame.unit .. "target", "player") then
-    unitFrame:SetBackdropBorderColor(1.0, 1.0, 1.0, 1.0)
+    unitFrame:SetBackdropBorderColor(1.0, 1.0, 1.0, .6)
+    --unitFrame:SetBackdropBorderColor(.5, .5, .5, 1.0)
+    --unitFrame:SetBackdropBorderColor(0.0, 0.0, 0.0, .75)
   else
     unitFrame:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
   end
@@ -110,6 +112,12 @@ function createUnitFrame(attributes)
   -- already returns useful information.
   function unitFrame:PLAYER_LOGIN()
     self:initialize()
+    if not unitFrame:HasScript("OnShow") then
+      unitFrame:SetScript("OnShow", function(self) end)
+    end
+    unitFrame:HookScript("OnShow", function(self)
+      self:update()
+    end)
   end
   unitFrame:RegisterEvent("PLAYER_LOGIN")
 
@@ -353,13 +361,6 @@ function createUnitFrame(attributes)
     _G.error() -- Not implemented.
   end
   ----------------------------------------------------------------------------------------------------------------------
-
-  if not unitFrame:HasScript("OnShow") then
-    unitFrame:SetScript("OnShow", function(self) end)
-  end
-  unitFrame:HookScript("OnShow", function(self)
-    self:update()
-  end)
 
   unitFrame:SetScript("OnEnter", function(self, motion)
     --self:SetBackdropBorderColor(1.0, 1.0, 1.0, 1.0)
