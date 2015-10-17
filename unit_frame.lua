@@ -3,7 +3,9 @@ local addonName, addon = ...
 setfenv(1, addon)
 
 local function updateBackdrop(unitFrame)
-  if _G.UnitExists(unitFrame.unit) and _G.UnitIsUnit(unitFrame.unit .. "target", "player") then
+  if _G.UnitExists(unitFrame.unit) and _G.UnitIsUnit(unitFrame.unit .. "target", "player") and
+    not _G.UnitIsUnit(unitFrame.unit, "player")
+  then
     unitFrame:SetBackdropBorderColor(1.0, 1.0, 1.0, .6)
     --unitFrame:SetBackdropBorderColor(.5, .5, .5, 1.0)
     --unitFrame:SetBackdropBorderColor(0.0, 0.0, 0.0, .75)
@@ -14,6 +16,7 @@ end
 
 -- TODO: do something more clever, like unregistering all events.
 function enableUnitFrame(unitFrame)
+  if unitFrame.enabled then return end
   unitFrame:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
@@ -21,14 +24,17 @@ function enableUnitFrame(unitFrame)
     _G.RegisterUnitWatch(unitFrame)
   end
   unitFrame:update()
+  unitFrame.enabled = true
 end
 
 function disableUnitFrame(unitFrame)
+  if not unitFrame.enabled then return end
   unitFrame:SetScript("OnEvent", function() end)
   if _G.UnitWatchRegistered(unitFrame) then
     _G.UnregisterUnitWatch(unitFrame)
   end
   unitFrame:Hide()
+  unitFrame.enabled = false
 end
 
 function createUnitFrame(attributes)
@@ -93,9 +99,9 @@ function createUnitFrame(attributes)
   end
 
   unitFrame:SetHeight(_G.math.abs(yOffset - settings.insets.bottom))
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
   unitFrame:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
@@ -107,17 +113,28 @@ function createUnitFrame(attributes)
     end
   end
 
-  -- The UI is not locked down yet when PLAYER_LOGIN fires, _G.InCombatLockdown() is false.
-  -- PLAYER_REGEN_DISABLED can be used to detect when the player is entering combat. IsInInstance()
-  -- already returns useful information.
-  function unitFrame:PLAYER_LOGIN()
-    self:initialize()
-    if not unitFrame:HasScript("OnShow") then
-      unitFrame:SetScript("OnShow", function(self) end)
+  -- The UI is not locked down yet when PLAYER_LOGIN fires, _G.InCombatLockdown() is false.  PLAYER_REGEN_DISABLED can
+  -- be used to detect when the player is entering combat.  IsInInstance() already returns useful information.
+  if _G.string.match(attributes.unit, "arena") then
+    function unitFrame:PLAYER_LOGIN()
+      self:initialize()
+      if not unitFrame:HasScript("OnShow") then
+        unitFrame:SetScript("OnShow", function(self) end)
+      end
+      unitFrame:HookScript("OnShow", function(self)
+        self:update()
+      end)
     end
-    unitFrame:HookScript("OnShow", function(self)
-      self:update()
-    end)
+  else
+    function unitFrame:PLAYER_LOGIN()
+      self:initialize()
+      if not unitFrame:HasScript("OnShow") then
+        unitFrame:SetScript("OnShow", function(self) end)
+      end
+      unitFrame:HookScript("OnShow", function(self)
+        self:update()
+      end)
+    end
   end
   unitFrame:RegisterEvent("PLAYER_LOGIN")
 
@@ -186,22 +203,21 @@ function createUnitFrame(attributes)
       _G.assert(not _G.InCombatLockdown())
       local _, instanceType = _G.IsInInstance()
 
-      -- http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/SecureStateDriver.lua
+      -- http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/SecureStateDriver.lua
       if _G.UnitWatchRegistered(unitFrame) then
         _G.UnregisterUnitWatch(unitFrame)
       end
       if instanceType == "arena" then
-        -- The "state-unitexists" attribute will be set to a boolean value denoting whether the unit
-        -- exists.
+        -- The "state-unitexists" attribute will be set to a boolean value denoting whether the unit exists.
         _G.RegisterUnitWatch(unitFrame, true)
       elseif instanceType == "pvp" then
         _G.RegisterUnitWatch(unitFrame)
       end
 
-      if instanceType ~= "arena" then
+      if instanceType == "arena" then
+        self:ARENA_PREP_OPPONENT_SPECIALIZATIONS()
+      else
         self:Hide()
-      elseif _G.UnitExists(self.unit) then
-        self:update()
       end
     end
   else
@@ -234,7 +250,7 @@ function createUnitFrame(attributes)
     _G.RegisterUnitWatch(unitFrame)
   end
 
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
   if unitFrame.unit == "player" then
     -- ...
 
@@ -277,19 +293,22 @@ function createUnitFrame(attributes)
     --]=]
     function unitFrame:ARENA_PREP_OPPONENT_SPECIALIZATIONS()
       --if _G.InCombatLockdown() then return end
-      local specID
+      local specId
       for i = 1, _G.MAX_ARENA_ENEMIES do
         if unitFrame.unit == "arena" .. i then
-          specID = _G.GetArenaOpponentSpec(i)
+          specId = _G.GetArenaOpponentSpec(i)
           break
         end
       end
-      if specID and specID > 0 then
-        local _, name, _, _, _, _, class = _G.GetSpecializationInfoByID(specID)
+      if specId and specId > 0 or _G.UnitExists(unitFrame.unit) then
         if not self:IsShown() then
           self:Show()
         else
           self:update()
+        end
+      else
+        if self:IsShown() then
+          self:Hide()
         end
       end
     end
@@ -299,7 +318,7 @@ function createUnitFrame(attributes)
       --_G.print("ARENA_OPPONENT_UPDATE", unit, eventType)
       -- Calling UnitIsUnit() probably doesn't always make a whole lot of sense as UnitExists(unit) might be false.
       if eventType == "cleared" then
-        -- When exacly does this happen? Seems to be at the start of an arena match for arena1 to arena5.
+        -- When exactly does this happen? Seems to be at the start of an arena match for arena1 to arena5.
         local oppNumber = _G.tonumber(_G.string.sub(unit, 6)) -- Example value for unit: "arena1".
         if not _G.UnitExists(unit) and not _G.GetArenaOpponentSpec(oppNumber) then
           self:Hide()
@@ -321,6 +340,7 @@ function createUnitFrame(attributes)
     end
     -- I think RegisterUnitEvent() does not work for ARENA_OPPONENT_UPDATE.
     unitFrame:RegisterEvent("ARENA_OPPONENT_UPDATE")
+    --unitFrame:Hide() -- Frames are implicitly shown upon creation.
 
   elseif _G.string.match(unitFrame.unit, "party") then
     function unitFrame:GROUP_ROSTER_UPDATE()
@@ -368,7 +388,7 @@ function createUnitFrame(attributes)
     _G.GameTooltip_SetDefaultAnchor(_G.GameTooltip, _G.WorldFrame)
     _G.GameTooltip:SetUnit(attributes.unit)
     -- Took these lines (more or less) from blizzard's "UnitFrame_UpdateTooltip". See
-    -- "http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitFrame.lua".
+    -- "http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/UnitFrame.lua".
     local r, g, b = _G.GameTooltip_UnitColor(attributes.unit)
     _G.GameTooltipTextLeft1:SetTextColor(r, g, b)
   end)
@@ -377,6 +397,8 @@ function createUnitFrame(attributes)
     --self:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
     _G.GameTooltip:FadeOut()
   end)
+
+  unitFrame.enabled = true
 
   if attributes.disabled then
     disableUnitFrame(unitFrame)

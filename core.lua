@@ -85,7 +85,7 @@ function handlerFrame:ADDON_LOADED(name)
   end
 
   ----------------------------------------------------------------------------------------------------------------------
-  -- Define special behaviour for some of the unit frames we just created.
+  -- Define special behaviour for some of the unit frames we just created. ---------------------------------------------
   ----------------------------------------------------------------------------------------------------------------------
 
   --[=[
@@ -115,9 +115,9 @@ function handlerFrame:ADDON_LOADED(name)
   end
   --]=]
 
-  do
-    -- I think we can't wrap script handlers of a frame that isn't explicitly protected (i.e.
-    -- CompactRaidFrameContainer), but creating an explicitly protected child frame and wrapping its handlers works.
+  do -- Hide the party frames when raid frames are shown.  I think we can't wrap script handlers of a frame that isn't
+    -- explicitly protected (i.e.  CompactRaidFrameContainer), but creating an explicitly protected child frame and
+    -- wrapping its handlers works.
     local proxyFrame = _G.CreateFrame("Frame", nil, _G.CompactRaidFrameContainer, "SecureHandlerBaseTemplate")
 
     local header = _G.CreateFrame("Frame", nil, _G.UIParent, "SecureHandlerBaseTemplate")
@@ -143,10 +143,66 @@ function handlerFrame:ADDON_LOADED(name)
     header:WrapScript(proxyFrame, "OnHide", [[
       for i = 1, 4 do
         RegisterUnitWatch(partyFrames[i])
-        partyFrames[i]:Show()
+        --partyFrames[i]:Show()
       end
     ]])
   end
+
+  -- http://wow.gamepedia.com/RestrictedEnvironment
+
+  ----------------------------------------------------------------------------------------------------------------------
+  do -- Hide the target and focus frames in arena.
+    local frame = _G.CreateFrame("Frame")
+
+    -- Returns false for 5v5 arena.
+    local function inArena()
+      return (_G.select(2, _G.IsInInstance())) == "arena" and not _G.UnitExists("party3") and
+        _G.GetNumArenaOpponentSpecs() <= 5
+    end
+
+    local arena1FramePoint = { _G.NKArena1Frame:GetPoint(1) }
+    local newArena1FramePoint = { _G.NKTargetFrame:GetPoint(1) }
+
+    frame:SetScript("OnEvent", function(self, event, ...)
+      if inArena() then
+        _G.PrimalUnitFrames.disableUnitFrame(_G.NKTargetFrame)
+        _G.PrimalUnitFrames.disableCastFrame(_G.NKTargetCastFrame)
+        _G.PrimalUnitFrames.disableUnitFrame(_G.NKFocusFrame)
+        _G.PrimalUnitFrames.disableCastFrame(_G.NKFocusCastFrame)
+        _G.NKArena1Frame:ClearAllPoints()
+        _G.NKArena1Frame:SetPoint(_G.unpack(newArena1FramePoint))
+        _G.PrimalUnitFrames.enableUnitFrame(_G.NKAltTargetFrame)
+      else
+        _G.PrimalUnitFrames.enableUnitFrame(_G.NKTargetFrame)
+        _G.PrimalUnitFrames.enableCastFrame(_G.NKTargetCastFrame)
+        _G.PrimalUnitFrames.enableUnitFrame(_G.NKFocusFrame)
+        _G.PrimalUnitFrames.enableCastFrame(_G.NKFocusCastFrame)
+        _G.NKArena1Frame:ClearAllPoints()
+        _G.NKArena1Frame:SetPoint(_G.unpack(arena1FramePoint))
+        _G.PrimalUnitFrames.disableUnitFrame(_G.NKAltTargetFrame)
+        if _G.select(2, _G.IsInInstance()) == "arena" then
+        end
+      end
+      if _G.select(2, _G.IsInInstance()) == "arena" and _G.UnitExists("party3") or _G.GetNumArenaOpponentSpecs() >= 4
+      then
+        _G.PrimalUnitFrames.disableUnitFrame(_G.NKArena1Frame)
+        _G.PrimalUnitFrames.disableCastFrame(_G.NKArena1CastFrame)
+        _G.PrimalUnitFrames.disableUnitFrame(_G.NKArena2Frame)
+        _G.PrimalUnitFrames.disableCastFrame(_G.NKArena2CastFrame)
+        _G.PrimalUnitFrames.disableUnitFrame(_G.NKArena3Frame)
+        _G.PrimalUnitFrames.disableCastFrame(_G.NKArena3CastFrame)
+      else
+        _G.PrimalUnitFrames.enableUnitFrame(_G.NKArena1Frame)
+        _G.PrimalUnitFrames.enableCastFrame(_G.NKArena1CastFrame)
+        _G.PrimalUnitFrames.enableUnitFrame(_G.NKArena2Frame)
+        _G.PrimalUnitFrames.enableCastFrame(_G.NKArena2CastFrame)
+        _G.PrimalUnitFrames.enableUnitFrame(_G.NKArena3Frame)
+        _G.PrimalUnitFrames.enableCastFrame(_G.NKArena3CastFrame)
+      end
+    end)
+    frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+  end
+  ----------------------------------------------------------------------------------------------------------------------
 
   self.ADDON_LOADED = nil
 end

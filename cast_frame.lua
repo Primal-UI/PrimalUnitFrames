@@ -3,15 +3,19 @@ local addonName, addon = ...
 setfenv(1, addon)
 
 function enableCastFrame(frame)
+  if frame.enabled then return end
   frame:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
   frame:update()
+  frame.enabled = true
 end
 
 function disableCastFrame(frame)
+  if not frame.enabled then return end
   frame:SetScript("OnEvent", function() end)
   frame:Hide()
+  frame.enabled = false
 end
 
 function createCastFrame(attributes)
@@ -355,6 +359,8 @@ function createCastFrame(attributes)
   else
     _G.error()
   end
+
+  castFrame.enabled = true
 
   return castFrame
 end

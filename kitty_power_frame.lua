@@ -57,7 +57,7 @@ function createKittyPowerFrame(attributes)
     frame:SetBackdropBorderColor(0.0, 0.0, 0.0, 1.0)
   end
   self.healthTag = PercentHealthTag:new("target", function(number)
-    if number --[[and 25 <= number]] and number <= 50 then
+    if number and 25 <= number and number <= 50 then
       self.healthFrame.fontString:SetText(number)
       self.healthFrame.fontString:SetWidth(self.healthFrame.fontString:GetStringWidth())
       self.healthFrame:SetWidth(self.healthFrame.fontString:GetStringWidth() + 2 * settings.fontSpacing)
@@ -67,8 +67,8 @@ function createKittyPowerFrame(attributes)
     end
   end)
 
-  --------------------------------------------------------------------------------------------------
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
   self.backgroundStatusBar = _G.CreateFrame("StatusBar", nil, self)
   do
     local statusBar = self.backgroundStatusBar
@@ -99,7 +99,7 @@ function createKittyPowerFrame(attributes)
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
   end
 
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
   self:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
@@ -178,7 +178,7 @@ function createKittyPowerFrame(attributes)
     self:UNIT_POWER_FREQUENT(unit)
   end
   self:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
   -- Stuff we need to do when PLAYER_LOGIN fires.
   function self:initialize()
@@ -193,6 +193,7 @@ function createKittyPowerFrame(attributes)
   -- Stuff we need to do when PLAYER_ENTERING_WORLD fires.
   function self:update()
     self:UNIT_DISPLAYPOWER("player")
+    self.healthTag:update()
   end
 
   function self:PLAYER_LOGIN()
@@ -204,8 +205,8 @@ function createKittyPowerFrame(attributes)
     self:update()
   end
   self:RegisterEvent("PLAYER_ENTERING_WORLD")
-  --------------------------------------------------------------------------------------------------
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
   return self
 end

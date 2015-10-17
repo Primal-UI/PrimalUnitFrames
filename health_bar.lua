@@ -17,19 +17,18 @@ local healthTag = function(unit, healthMax, health, totalAbsorbs)
     -- I don't like the blue UnitSelectionColor() returns when the unit is a player not active for PvP in some places.
     -- It's also used for NPCs sometimes.
     if _G.UnitIsEnemy("player", unit) then
-      if _G.UnitCanAttack(unit, "player") then -- He can attack us. Red.
+      if _G.UnitCanAttack(unit, "player") then -- He can attack us.  Red.
         colorStr = "ffff0000"
-      else -- He can't attack us. Yellow.
+      else -- He can't attack us.  Yellow.
         colorStr = "ffffff00"
       end
-    else -- He's our friend. Green.
+    else -- He's our friend.  Green.
       colorStr = "ff00ff00"
     end
   else
     local red, green, blue, alpha = _G.UnitSelectionColor(unit)
     -- http://wowprogramming.com/docs/api_types#colorString
-    colorStr = _G.string.format("%02x%02x%02x%02x", alpha * 255, red * 255, green * 255, blue *
-      255)
+    colorStr = _G.string.format("%02x%02x%02x%02x", alpha * 255, red * 255, green * 255, blue * 255)
   end
 
   local healthStr
@@ -45,11 +44,9 @@ local healthTag = function(unit, healthMax, health, totalAbsorbs)
     end
 
     if totalAbsorbs / 1000 >= 10000 then
-      healthStr = healthStr .. " + " .. _G.string.format("%dm", _G.math.floor((totalAbsorbs +
-        500000) / 1000000))
+      healthStr = healthStr .. " + " .. _G.string.format("%dm", _G.math.floor((totalAbsorbs + 500000) / 1000000))
     elseif totalAbsorbs > 0 then
-      healthStr = healthStr .. " + " .. _G.string.format("%dk", _G.math.floor((totalAbsorbs + 500) /
-        1000))
+      healthStr = healthStr .. " + " .. _G.string.format("%dk", _G.math.floor((totalAbsorbs + 500) / 1000))
     end
   end
 

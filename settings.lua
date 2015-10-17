@@ -3,7 +3,7 @@ local addonName, addon = ...
 setfenv(1, addon)
 
 settings = {
-  epsilon = 0.001,
+  epsilon = .001,
   spacing = 1,
   insets = { left = 1, right = 1, top = 1, bottom = 1 },
   fontSpacing = 2,
@@ -12,26 +12,28 @@ settings = {
   defaultFont = _G.CreateFont("NKUFDefaultFont"),
   fontSize = 11,
   strings = {
-    dead    = "Dead",
-    ghost   = "Ghost",
+    dead = "Dead",
+    ghost = "Ghost",
     offline = "Offline",
     unknown = "Unknown",
   },
   colors = {
     background = { r = 0, g = 0, b = 0, a = .5, colorStr = "80000000" },
     casting = { r = .85, g = .25, b = .25, a = .75, colorStr = "bfd94040" },
-    castingNotInterruptible = { r = 0.75, g = 0.25, b = 0.85, a = 0.75, colorStr = "bfbf40d9" },
-    dead = { r = 0.75, g = 0.75, b = 0.75, a = 0.25, colorStr = "40bfbfbf" },
-    incomingHeals = { r = 0.5, g = 0.5, b = 0.5, a = 0.75, colorStr = "bf808080" },
-    incomingDark = { r = 0.25, g = 0.25, b = 0.25, a = 0.75, colorStr = "bf404040" },
-    health = { r = 0.85, g = 0.85, b = 0.85, a = 0.75, colorStr = "bfd9d9d9" },
-    healthDark = { r = 0.4, g = 0.4, b = 0.4, a = 0.75, colorStr = "bf666666" },
-    powerBarBackground = { r = 0, g = 0, b = 0, a = 0.75, colorStr = "bf000000" },
-    noPower = { r = 0, g = 0, b = 0, a = 0.75, colorStr = "bf000000" },
-    tapped = { r = 0.625, g = 0.625, b = 0.625, a = 1, colorStr = "ffa0a0a0" },
+    castingNotInterruptible = { r = .75, g = .25, b = .85, a = .75, colorStr = "bfbf40d9" },
+    dead = { r = .75, g = .75, b = .75, a = .25, colorStr = "40bfbfbf" },
+    incomingHeals = { r = .5, g = .5, b = .5, a = .75, colorStr = "bf808080" },
+    incomingDark = { r = .25, g = .25, b = .25, a = .75, colorStr = "bf404040" },
+    health = { r = .85, g = .85, b = .85, a = .75, colorStr = "bfd9d9d9" },
+    healthDark = { r = .4, g = .4, b = .4, a = .75, colorStr = "bf666666" },
+    powerBarBackground = { r = 0, g = 0, b = 0, a = .75, colorStr = "bf000000" },
+  --noPower = { r = .25, g = .25, b = .25, a = .5, colorStr = "80404040" },
+  --noPower = { r = .25, g = .25, b = .25, a = .75, colorStr = "bf404040" },
+    noPower = { r = 0, g = 0, b = 0, a = .75, colorStr = "bf000000" },
+    tapped = { r = .625, g = .625, b = .625, a = 1, colorStr = "ffa0a0a0" },
     offline = { r = 1, g = 1, b = 1, a = 1, colorStr = "ffffffff" },
   },
-  powerAlpha = 0.75,
+  powerAlpha = .75,
   offlineColor = "ffffffff",
   defaults = {
     width = 208,
@@ -44,7 +46,7 @@ settings = {
 }
 
 ------------------------------------------------------------------------------------------------------------------------
--- http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/UnitFrame.lua
+-- http://wowprogramming.com/utils/xmlbrowser/test/FrameXML/UnitFrame.lua
 -- http://forums.wowace.com/showthread.php?t=18724
 settings.powerColors = {}
 for powerToken, color in _G.pairs(_G.PowerBarColor) do
@@ -188,7 +190,7 @@ for i = 1, 4 do
     relativePoint = "BOTTOM",
     xOffset       = 0,
     --yOffset       = -38,
-    yOffset       = -60,
+    yOffset       = -56,
 
     bars = {
       {
@@ -247,16 +249,16 @@ _G.table.insert(frameAttributes, {
   xOffset       = 0,
   yOffset       = 368,
   width         = 168,
-  height        = 4,
+  height        = 5,
 
   bars = {
     {
       create = createHealthBar,
-      height = 2,
+      height = 3,
     },
   },
 })
-]]
+--]]
 
 _G.table.insert(frameAttributes, {
   name = "NKKittyPowerFrame",
@@ -340,7 +342,9 @@ _G.table.insert(frameAttributes, {
   relativeTo    = "NKTargetFrame",
   relativePoint = "BOTTOM",
   xOffset       = 0,
-  yOffset       = -60, -- 2 + 28 + 8 + 22 = 60
+--yOffset       = -62, -- 2 + 28 + 8 + 22 + 2 = 62
+--yOffset       = -66, -- 2 + 28 + 2 + 32 + 2 = 66
+  yOffset       = -56, -- 2 + 28 + 2 + 22 + 2 = 56
   width         = settings.defaults.width,
 
   bars = {
@@ -357,28 +361,6 @@ _G.table.insert(frameAttributes, {
       create = createHealthBar,
       height = 6,
     },
-  },
-})
-
-_G.table.insert(frameAttributes, {
-  name = "NKFocusCastFrame",
-  unit = "focus",
-  create = createCastFrame,
-
-  point         = "BOTTOMLEFT",
-  relativeTo    = "NKFocusFrame",
-  relativePoint = "TOPLEFT",
-  xOffset       = -2,
-  yOffset       = 2,
-
-  width         = settings.defaults.width + 2,
-  height        = 22,
-
-  icon = {
-    point         = "BOTTOMRIGHT",
-    relativePoint = "BOTTOMLEFT",
-    xOffset       = 1,
-    yOffset       = 0,
   },
 })
 
@@ -403,13 +385,46 @@ _G.table.insert(frameAttributes, {
   unit = "target",
   create = createCastFrame,
 
+  point         = "BOTTOMLEFT",
+  relativeTo    = "NKTargetFrame",
+  relativePoint = "TOPLEFT",
+  xOffset       = -3,
+  yOffset       = 2,
+
+  width         = settings.defaults.width + 3,
+  height        = 22,
+
+  --[[
   point         = "TOPRIGHT",
   relativeTo    = "UIParent",
   relativePoint = "CENTER",
   xOffset       = 112, -- (193 - 1 + 32) / 2 = 112
   yOffset       = -34,
-  width         = 193,
 
+  width         = 193,
+  height        = 22,
+  ]]
+
+  icon = {
+    point         = "BOTTOMRIGHT",
+    relativePoint = "BOTTOMLEFT",
+    xOffset       = 1,
+    yOffset       = 0,
+  },
+})
+
+_G.table.insert(frameAttributes, {
+  name = "NKFocusCastFrame",
+  unit = "focus",
+  create = createCastFrame,
+
+  point         = "BOTTOMLEFT",
+  relativeTo    = "NKFocusFrame",
+  relativePoint = "TOPLEFT",
+  xOffset       = -3,
+  yOffset       = 2,
+
+  width         = settings.defaults.width + 3,
   height        = 22,
 
   icon = {
@@ -429,7 +444,7 @@ _G.table.insert(frameAttributes, {
   relativeTo    = "NKFocusFrame",
   relativePoint = "BOTTOM",
   xOffset       = 0,
-  yOffset       = -60,
+  yOffset       = -56,
   width         = settings.defaults.width,
 
   bars = {
@@ -459,7 +474,7 @@ for i = 2, 3 do
     relativeTo    = "NKArena" .. (i - 1) .. "Frame",
     relativePoint = "BOTTOM",
     xOffset       = 0,
-    yOffset       = -60,
+    yOffset       = -56,
     width         = settings.defaults.width,
 
     bars = {
@@ -491,10 +506,10 @@ for i = 1, 3 do
     point         = "BOTTOMLEFT",
     relativeTo    = "NKArena" .. i .. "Frame",
     relativePoint = "TOPLEFT",
-    xOffset       = -2,
+    xOffset       = -3,
     yOffset       = 2,
 
-    width         = settings.defaults.width + 2,
+    width         = settings.defaults.width + 3,
     height        = 22,
 
     icon = {

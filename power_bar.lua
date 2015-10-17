@@ -55,15 +55,25 @@ function createPowerBar(unit, mirror)
       self.powerStatusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
     end
     self:UNIT_MAXPOWER(unit)
-    self:UNIT_POWER_FREQUENT(unit)
+    --self:UNIT_POWER_FREQUENT(unit)
   end
   powerBar:RegisterUnitEvent("UNIT_DISPLAYPOWER", unit)
 
+  -- When Berserk expires the current energy might change (as the maximum energy is lower), but only UNIT_MAXPOWER is
+  -- fired.  That's why we also update the current power.
   function powerBar:UNIT_MAXPOWER(unit)
     local powerMax = _G.UnitPowerMax(unit)
     if powerMax and powerMax > 0 then
       self.powerStatusBar:SetMinMaxValues(0, powerMax)
       self.powerMissingStatusBar:SetMinMaxValues(0, powerMax)
+      if _G.UnitIsDeadOrGhost(unit) then
+        self.powerStatusBar:SetValue(0)
+        self.powerMissingStatusBar:SetValue(powerMax)
+      else
+        local power = _G.UnitPower(unit)
+        self.powerStatusBar:SetValue(power)
+        self.powerMissingStatusBar:SetValue(powerMax - power)
+      end
     else
       self.powerStatusBar:SetMinMaxValues(0, 1)
       self.powerStatusBar:SetValue(1)
@@ -76,7 +86,7 @@ function createPowerBar(unit, mirror)
   function powerBar:UNIT_POWER_FREQUENT(unit)
     if _G.UnitPowerType(unit) then
       local powerMax = _G.UnitPowerMax(unit)
-      if powerMax and powerMax ~= 0 then
+      if powerMax and powerMax > 0 then
         if _G.UnitIsDeadOrGhost(unit) then
           self.powerStatusBar:SetValue(0)
           self.powerMissingStatusBar:SetValue(powerMax)
@@ -95,8 +105,8 @@ function createPowerBar(unit, mirror)
 
   function powerBar:update(unit)
     if _G.UnitExists(unit) and _G.UnitIsConnected(unit) then
-        self:UNIT_DISPLAYPOWER(unit)
-        self:UNIT_POWER_FREQUENT(unit)
+      self:UNIT_DISPLAYPOWER(unit)
+      self:UNIT_POWER_FREQUENT(unit)
     elseif (_G.select(2, _G.IsInInstance())) == "arena" then
       self.powerStatusBar:SetMinMaxValues(0, 1)
       self.powerMissingStatusBar:SetMinMaxValues(0, 1)
@@ -167,7 +177,7 @@ function createManaBar(unit, mirror)
     statusBar:SetStatusBarColor(color.r, color.g, color.b, color.a)
   end
 
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
   manaBar:SetScript("OnEvent", function(self, event, ...)
     return self[event](self, ...)
   end)
@@ -177,6 +187,14 @@ function createManaBar(unit, mirror)
     if manaMax and manaMax ~= 0 then
       self.manaStatusBar:SetMinMaxValues(0, manaMax)
       self.manaMissingStatusBar:SetMinMaxValues(0, manaMax)
+      if _G.UnitIsDeadOrGhost(unit) then
+        self.manaStatusBar:SetValue(0)
+        self.manaMissingStatusBar:SetValue(manaMax)
+      else
+        local mana = _G.UnitPower(unit, _G.SPELL_POWER_MANA)
+        self.manaStatusBar:SetValue(mana)
+        self.manaMissingStatusBar:SetValue(manaMax - mana)
+      end
     else
       self.manaStatusBar:SetMinMaxValues(0, 1)
       self.manaStatusBar:SetValue(0)
@@ -201,11 +219,10 @@ function createManaBar(unit, mirror)
     end
   end
   manaBar:RegisterUnitEvent("UNIT_POWER_FREQUENT", unit)
-  --------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------------------------
 
   function manaBar:update(unit)
     self:UNIT_MAXPOWER(unit)
-    self:UNIT_POWER_FREQUENT(unit)
   end
 
   return manaBar
