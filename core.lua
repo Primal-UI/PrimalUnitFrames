@@ -60,7 +60,7 @@ function handlerFrame:ADDON_LOADED(name)
   hideBlizzardUnitFrame(_G.FocusFrameToT)
   _G.ComboFrame:UnregisterAllEvents(); _G.ComboFrame:Hide()
   _G.BuffFrame:UnregisterAllEvents(); _G.BuffFrame:Hide()
-  _G.ConsolidatedBuffs:Hide()
+  -- _G.ConsolidatedBuffs:Hide()
   _G.TemporaryEnchantFrame:Hide()
   _G.CastingBarFrame:UnregisterAllEvents()
   -- This also seems to prevent _G.BuffTiimer1 from being shown. TODO: do we need to replace it?

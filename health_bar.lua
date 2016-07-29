@@ -75,7 +75,7 @@ function createHealthBar(unit, mirror)
   do
     local texture = healthBar.health
     local color = settings.colors.background
-    texture:SetTexture(color.r, color.g, color.b, color.a)
+    texture:SetColorTexture(color.r, color.g, color.b, color.a)
     texture:SetPoint("TOP")
     texture:SetPoint("BOTTOM")
     if mirror then
@@ -89,7 +89,7 @@ function createHealthBar(unit, mirror)
   do
     local texture = healthBar.healthMissing
     local color = settings.colors.health
-    texture:SetTexture(color.r, color.g, color.b, color.a)
+    texture:SetColorTexture(color.r, color.g, color.b, color.a)
     texture:SetPoint("TOP")
     texture:SetPoint("BOTTOM")
     if mirror then
@@ -136,7 +136,7 @@ function createHealthBar(unit, mirror)
   do
     local texture = healthBar.incomingHeals
     local color = settings.colors.incomingHeals
-    texture:SetTexture(color.r, color.g, color.b, color.a)
+    texture:SetColorTexture(color.r, color.g, color.b, color.a)
     texture:SetPoint("TOP")
     texture:SetPoint("BOTTOM")
     if mirror then
@@ -212,7 +212,7 @@ function createHealthBar(unit, mirror)
     else
       color = settings.colors.health
     end
-    self.healthMissing:SetTexture(color.r, color.g, color.b, color.a)
+    self.healthMissing:SetColorTexture(color.r, color.g, color.b, color.a)
 
     if _G.UnitIsDeadOrGhost(unit) then
       self.health:Hide()

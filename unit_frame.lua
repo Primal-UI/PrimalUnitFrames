@@ -90,7 +90,7 @@ function createUnitFrame(attributes)
 
   for i = 2, #attributes.bars do
     local spacer = unitFrame:CreateTexture()
-    spacer:SetTexture(0.0, 0.0, 0.0)
+    spacer:SetColorTexture(0.0, 0.0, 0.0)
     spacer:SetPoint("TOPLEFT", settings.spacing, yOffset)
     spacer:SetPoint("TOPRIGHT", -settings.spacing, yOffset)
     spacer:SetHeight(1)

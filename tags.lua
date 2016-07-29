@@ -117,10 +117,12 @@ do
       color = class and settings.classColors[class].colorStr or "ffffffff"
     -- Similar to code from TargetFrame_CheckFaction() from Blizzard's TargetFrame.lua.  See
     -- http://wowprogramming.com/utils/xmlbrowser/live/FrameXML/TargetFrame.lua
+    --[[
     elseif not _G.UnitPlayerControlled(unit) and _G.UnitIsTapped(unit) and not
     _G.UnitIsTappedByPlayer(unit) and not _G.UnitIsTappedByAllThreatList(unit) and not
     _G.UnitIsDead(unit) then
       color = settings.colors.tapped.colorStr
+    ]]
     end
 
     local name = (_G.UnitName(unit))
